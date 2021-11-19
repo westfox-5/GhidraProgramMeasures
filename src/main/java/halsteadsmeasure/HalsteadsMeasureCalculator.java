@@ -2,72 +2,97 @@ package halsteadsmeasure;
 
 import java.util.List;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressIterator;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.Variable;
-import ghidra.program.model.listing.VariableFilter;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Listing;
+import halsteadsmeasure.util.StringUtils;
 
 public class HalsteadsMeasureCalculator {
-	private final HalsteadsMeasurePlugin plugin;
+	private static final String RET_INSTR_MNEMONIC_STR = "RET";
 	
-	private Function mainFn;
-	private boolean canDo;
+	private final HalsteadsMeasurePlugin plugin;
 	
 	public HalsteadsMeasureCalculator(HalsteadsMeasurePlugin plugin) {
 		this.plugin = plugin;
 	}
 	
-	public Function getMainFunction() {
-		initMainFunction();
-		return mainFn;
+	private Function findFunction(String fnName) {
+		if (StringUtils.isEmpty(fnName)) {
+			return null;
+		}
+		
+		List<Function> fns = plugin.getCurrentProgram().getListing().getGlobalFunctions(fnName);
+		if (!(fns != null && !fns.isEmpty())) {
+			plugin.errorMsg(this, "No function found in current program with name `"+fnName+"`.");
+			return null;
+		}
+		if (fns.size() > 1) {
+			plugin.errorMsg(this, "More than 1 function found in current program with name `"+fnName+"`.");
+			return null;
+		}
+		
+		// fns.size() == 1
+		return fns.iterator().next();
 	}
+	
+	
+	public HalsteadsMeasure calculateForFunction(String fnName) {
+		HalsteadsMeasure hm = new HalsteadsMeasure();
+		
+		Function function = findFunction(fnName);
+		if (function == null) 
+			return hm;
+		
+		plugin.debugMsg(this, "###################### START PARSING `"+fnName+"` [entry_point: `"+function.getEntryPoint()+"`] ######################");
 
-	private void initMainFunction() {
-		// lazy loader
-		if (mainFn == null) {
-			canDo = true;
-			List<Function> mainFns = plugin.getCurrentProgram().getListing().getGlobalFunctions("main");
-			if (!(mainFns != null && !mainFns.isEmpty())) {
-				plugin.errorMsg(this, "No `main` function found in current program.");
-				canDo = false;
-				return;
+		Listing listing = plugin.getCurrentProgram().getListing();
+		
+		//Variable[] localVariables = mainFn.getLocalVariables();
+		//int numLocalVariables = localVariables != null ? localVariables.length : 0;
+		
+		// get instructions starting @ the function entry point
+		InstructionIterator instructions = listing.getInstructions(function.getEntryPoint(), true);
+		boolean retInstructionFound = false;
+		int numInstructions = 0;
+		while (instructions.hasNext() && !retInstructionFound) {
+			Instruction instr = instructions.next();
+			numInstructions++;
+			
+			{ /* OPERATOR */
+				String op = instr.getMnemonicString();
+				// TODO is this check needed?
+				if (StringUtils.isEmpty(op)) {
+					continue;
+				}
+
+				if (RET_INSTR_MNEMONIC_STR.equals(op)) {
+					retInstructionFound = true; 				// STOP 
+				}
+				
+				hm.addOperator(op, instr);
 			}
-			if (mainFns.size() > 1) {
-				plugin.errorMsg(this, "More than 1 `main` function found in current program.");
-				canDo = false;
-				return;
+			
+			
+			{ /* OPERANDS */
+				int numOperands = instr.getNumOperands();
+				String opnd;
+				for (int i=0;i<numOperands;i++) {
+					opnd = instr.getDefaultOperandRepresentation(i);
+					// TODO is this check needed?
+					if (StringUtils.isEmpty(opnd)) { 
+						continue;
+					}
+					
+					hm.addOperand(opnd, instr);
+				}
 			}
 			
-			this.mainFn = mainFns.iterator().next();
+			plugin.debugMsg(this, instr);
 		}
-	}
-	
-	
-	public void calculate() {
-		initMainFunction();
-		if (!canDo) return;
 		
-		plugin.infoMsg(this, "Found `main` function at `"+mainFn.getEntryPoint()+"`");
+		plugin.debugMsg(this, "###################### END PARSING `"+fnName+"` [num_instructions:"+numInstructions+"] ######################");
 		
-		Variable[] localVariables = mainFn.getLocalVariables();
-		int numLocalVariables = localVariables != null ? localVariables.length : 0;
-		
-		AddressIterator addresses = mainFn.getBody().getAddresses(true);
-		while(addresses.hasNext()) {
-			Address addr = addresses.next();
-			Instruction instr = plugin.getCurrentProgram().getListing().getInstructionAt(addr);
-			
-			/* INSTR OP STRING */
-			//instr.getMnemonicString();
-			
-			/* INSTR PARAM STRING  -- from 0 to numOperands */
-			// instr.getDefaultOperandRepresentation(0);
-			
-			// instr.getNumOperands()
-			
-			plugin.infoMsg(this, instr);
-		}
+		return hm;
 	}
 }

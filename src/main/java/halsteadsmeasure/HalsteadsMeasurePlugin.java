@@ -40,7 +40,10 @@ import ghidra.util.Msg;
 //@formatter:on
 public class HalsteadsMeasurePlugin extends ProgramPlugin {	
 
-	private HalsteadsMeasureCalculator calculator;
+	/**** ALLOWED CHANGES ****/
+	private static Boolean DEBUG = false;
+	/**** END ALLOWED CHANGES SECTION****/
+	
 	
 	/**
 	 * Plugin constructor.
@@ -49,20 +52,57 @@ public class HalsteadsMeasurePlugin extends ProgramPlugin {
 	 */
 	public HalsteadsMeasurePlugin(PluginTool tool) {
 		super(tool, false, false);
-		
-		calculator = new HalsteadsMeasureCalculator(this);
 
 		createActions();
 	}
 
 	
 	private void createActions() {
+		final HalsteadsMeasurePlugin plugin = this;
+		
 		DockingAction action = new DockingAction("Calculate Halstead's Measures", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				Msg.info(this, "START");
+				HalsteadsMeasureCalculator calculator = new HalsteadsMeasureCalculator(plugin);
+
+				String functionName = "main";
+				HalsteadsMeasure hm = calculator.calculateForFunction(functionName);
+				if (hm == null) return;
 				
-				calculator.calculate();
+				// TODO implement proper serialization of tokens
+				/*
+				String uniqueOpStr = hm.getOpOccurrences().entrySet().stream()
+					.map(entry -> { 
+						List<Instruction> value = entry.getValue();
+						String addrOfOcc = value.stream()
+								.map(i -> i.getAddress().toString())
+								.sorted()
+								.collect(Collectors.joining(", "));
+						return entry.getKey() + " - found @ ["+addrOfOcc+"] ";
+					})
+					.sorted()
+					.collect(Collectors.joining("\n"));
+				
+				String uniqueOpndStr = hm.getOpndOccurrences().entrySet().stream()
+					.map(entry -> { 
+						List<Instruction> value = entry.getValue();
+						String addrOfOcc = value.stream()
+								.map(i -> i.getAddress().toString())
+								.sorted()
+								.collect(Collectors.joining(", "));
+						return entry.getKey() + " - found @ ["+addrOfOcc+"] ";
+					})
+					.sorted()
+					.collect(Collectors.joining("\n"));
+				*/
+				
+				// TODO find a way to create dialogs (@see Msg.showInfo)
+				infoMsg(plugin, "----------------------------------------------------");
+				infoMsg(plugin, hm.countDistinctOperators() + " unique operators (n1)");//: \n" + uniqueOpStr);
+				infoMsg(plugin, hm.countDistinctOperands()  + " unique operands (n2)"); //: \n" + uniqueOpndStr);
+				infoMsg(plugin, hm.countOperators() + " total operators (N1)");
+				infoMsg(plugin,  hm.countOperands() + " total operands (N2)");
+				infoMsg(plugin, "----------------------------------------------------");
 			}
 
 			@Override
@@ -71,14 +111,20 @@ public class HalsteadsMeasurePlugin extends ProgramPlugin {
 			}
 		};
 		action.setEnabled(true);
+		// TODO externalize strings
 		action.setMenuBarData(new MenuData(new String[] { "Window", "Halstead's Measures" }));
 		tool.addAction(action);
 	}
 
-	
+	/* convenience method for debugging */
+	protected void debugMsg(Object originator, Object msg) {
+		if (DEBUG) infoMsg(originator, msg);
+	}
+	/* convenience method for info msg reporting */
 	protected void infoMsg(Object originator, Object msg) {
 		Msg.info(originator, msg);
 	}
+	/* convenience method for error msg reporting */
 	protected void errorMsg(Object originator, Object msg) {
 		Msg.error(originator, msg);
 	}
