@@ -16,83 +16,101 @@ import ghidra.program.model.listing.Instruction;
  * 
  * Wrapper class for the Halstead's measures.
  */
-/**
- * @author liger
- *
- */
 public class HalsteadsMeasure {
 	
 	/** Keep the pointer to the instruction for each operator */
 	private final Map<String, List<Instruction>> opOccurrences;
 	/** Keep the pointer to the instruction for each operand */
 	private final Map<String, List<Instruction>> opndOccurrences;
+	
+	private Integer numDistinctOperators, numTotalOperators;
+	private Integer numDistinctOperands, numTotalOperands;
+	
+	public static HalsteadsMeasure.Builder make() {
+		return new HalsteadsMeasure.Builder();
+	}
 
-	protected HalsteadsMeasure() {
-		this.opOccurrences = new HashMap<>();
-		this.opndOccurrences = new HashMap<>();
+	private HalsteadsMeasure(Map<String, List<Instruction>> opOccurrences, Map<String, List<Instruction>> opndOccurrences) {
+		this.opOccurrences = opOccurrences;
+		this.opndOccurrences = opndOccurrences; 
+		
+		init();
 	}
 	
-	/** EXTERNAL INTERFACE */
-	
-	public void addOperator(String op, Instruction instruction) {
-		_safe_addToMap(opOccurrences, op, instruction);
+	private void init() {
+		this.numDistinctOperators = opOccurrences.keySet().size();
+		this.numDistinctOperands = opndOccurrences.keySet().size();
+		
+		this.numTotalOperators = opOccurrences.values()	// Collection<List<V>>
+					.stream()
+					.flatMap(List::stream)				// from List<List<V>> to List<V>
+					.collect(Collectors.toList())
+					.size();
+		this.numTotalOperands = opndOccurrences.values()	// Collection<List<V>>
+					.stream()
+					.flatMap(List::stream)				// from List<List<V>> to List<V>
+					.collect(Collectors.toList())
+					.size();
 	}
-	
-	public void addOperand(String opnd, Instruction instruction) {
-		_safe_addToMap(opndOccurrences, opnd, instruction);
-	}
-	
-	public int countDistinctOperators() {
-		return _safe_map(opOccurrences).keySet().size();
-	}
-	
-	public int countDistinctOperands() {
-		return _safe_map(opndOccurrences).keySet().size();
-	}
-	
-	public int countOperators() {
-		return _safe_map(opOccurrences).values()	// Collection<List<V>>
-				.stream()
-				.flatMap(List::stream)				// from List<List<V>> to List<V>
-				.collect(Collectors.toList())
-				.size();
-	}
-	
-	public int countOperands() {
-		return _safe_map(opndOccurrences).values()	// Collection<List<V>>
-				.stream()
-				.flatMap(List::stream)				// from List<List<V>> to List<V>
-				.collect(Collectors.toList())
-				.size();
-	}
-	
-	
 	
 	
 	public Map<String, List<Instruction>> getOpOccurrences() {
-		return _safe_map(opOccurrences);
+		return opOccurrences;
 	}
 
 	public Map<String, List<Instruction>> getOpndOccurrences() {
-		return _safe_map(opndOccurrences);
+		return opndOccurrences;
 	}
 
-	/** INTERNAL UTILITIES */
-	
-	private <K, V> Map<K, V> _safe_map(Map<K,V> map) {
-		if (map == null) return new HashMap<>();
-		return map;
+	public Integer getNumDistinctOperators() {
+		return numDistinctOperators;
 	}
-	
-	private <V extends Instruction> void _safe_addToMap(Map<String, List<V>> map, String key, V value) {
-		map = _safe_map(map);
+
+	public Integer getNumTotalOperators() {
+		return numTotalOperators;
+	}
+
+	public Integer getNumDistinctOperands() {
+		return numDistinctOperands;
+	}
+
+	public Integer getNumTotalOperands() {
+		return numTotalOperands;
+	}
+
+
+	public static class Builder {
+		/** Keep the pointer to the instruction for each operator */
+		private final Map<String, List<Instruction>> opOccurrences = new HashMap<>();
+		/** Keep the pointer to the instruction for each operand */
+		private final Map<String, List<Instruction>> opndOccurrences = new HashMap<>();
 		
-		List<V> list = map.get(key);
-		if (list == null) {
-			list = new ArrayList<>();
-			map.put(key, list);
+		
+		public Builder addOperator(String op, Instruction instruction) {
+			_addToMap(opOccurrences, op, instruction);
+			return this;
 		}
+		
+		public Builder addOperand(String opnd, Instruction instruction) {
+			_addToMap(opndOccurrences, opnd, instruction);
+			return this;
+		}
+	
+		public HalsteadsMeasure build() {
+			HalsteadsMeasure hm = new HalsteadsMeasure(opOccurrences, opndOccurrences);
+			
+			return hm;
+		}
+		
 
-		list.add(value);
+		private <V extends Instruction> void _addToMap(Map<String, List<V>> map, String key, V value) {
+			List<V> list = map.get(key);
+			if (list == null) {
+				list = new ArrayList<>();
+				map.put(key, list);
+			}
+	
+			list.add(value);
+		}
 	}
 }

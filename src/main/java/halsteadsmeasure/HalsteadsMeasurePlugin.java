@@ -97,12 +97,14 @@ public class HalsteadsMeasurePlugin extends ProgramPlugin {
 				*/
 				
 				// TODO find a way to create dialogs (@see Msg.showInfo)
-				infoMsg(plugin, "----------------------------------------------------");
-				infoMsg(plugin, hm.countDistinctOperators() + " unique operators (n1)");//: \n" + uniqueOpStr);
-				infoMsg(plugin, hm.countDistinctOperands()  + " unique operands (n2)"); //: \n" + uniqueOpndStr);
-				infoMsg(plugin, hm.countOperators() + " total operators (N1)");
-				infoMsg(plugin,  hm.countOperands() + " total operands (N2)");
-				infoMsg(plugin, "----------------------------------------------------");
+				infoMsg(plugin,
+				"\n" + 	"---- Halstead's Measures ----------------------------"   + "\n" +
+						" Unique operators (n1):\t"+ hm.getNumDistinctOperators() + "\n" +//: \n" + uniqueOpStr);
+						" Unique operands  (n2):\t"+ hm.getNumDistinctOperands()  + "\n" +//: \n" + uniqueOpndStr);
+						" Total operators  (N1):\t"+ hm.getNumTotalOperators()    + "\n" +
+						" Total operands   (N2):\t"+ hm.getNumTotalOperands()     + "\n" +
+						"-----------------------------------------------------"
+					);
 			}
 
 			@Override

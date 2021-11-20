@@ -38,11 +38,12 @@ public class HalsteadsMeasureCalculator {
 	
 	
 	public HalsteadsMeasure calculateForFunction(String fnName) {
-		HalsteadsMeasure hm = new HalsteadsMeasure();
+		HalsteadsMeasure.Builder builder = HalsteadsMeasure.make();
 		
 		Function function = findFunction(fnName);
-		if (function == null) 
-			return hm;
+		if (function == null) {
+			return builder.build();
+		}
 		
 		plugin.debugMsg(this, "###################### START PARSING `"+fnName+"` [entry_point: `"+function.getEntryPoint()+"`] ######################");
 
@@ -70,7 +71,7 @@ public class HalsteadsMeasureCalculator {
 					retInstructionFound = true; 				// STOP 
 				}
 				
-				hm.addOperator(op, instr);
+				builder.addOperator(op, instr);
 			}
 			
 			
@@ -84,7 +85,7 @@ public class HalsteadsMeasureCalculator {
 						continue;
 					}
 					
-					hm.addOperand(opnd, instr);
+					builder.addOperand(opnd, instr);
 				}
 			}
 			
@@ -93,6 +94,6 @@ public class HalsteadsMeasureCalculator {
 		
 		plugin.debugMsg(this, "###################### END PARSING `"+fnName+"` [num_instructions:"+numInstructions+"] ######################");
 		
-		return hm;
+		return builder.build();
 	}
 }
