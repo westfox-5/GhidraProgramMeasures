@@ -40,27 +40,6 @@ public class HalsteadsMeasure {
 		init();
 	}
 	
-	
-	private HalsteadsMeasure(double n1, double n2, double N1, double N2) {
-		this.n1 = BigDecimal.valueOf(n1);
-		this.n2 = BigDecimal.valueOf(n2);
-		this.N1 = BigDecimal.valueOf(N1);
-		this.N2 = BigDecimal.valueOf(N2);
-		this.opOccurrences = null;
-		this.opndOccurrences = null;
-	}
-	
-	public static void main(String... args) {
-		HalsteadsMeasure hm = new HalsteadsMeasure(12, 7, 27, 15);
-		System.out.println(hm.getProgramVocabulary());
-		System.out.println(hm.getProgramLength());
-		System.out.println(hm.getProgramEstimatedLength());
-		System.out.println(hm.getProgramVolume());
-		System.out.println(hm.getProgramDifficulty());
-		System.out.println(hm.getProgramEffort());
-		System.out.println(hm.getProgramCodingTime());
-		System.out.println(hm.getProgramEstimatedErrors());
-	}
 	/**
 	 * @see Pitfall #1 in: <a href="https://blogs.oracle.com/javamagazine/post/four-common-pitfalls-of-the-bigdecimal-class-and-how-to-avoid-them">https:blogs.oracle.com</a> 
 	 */
