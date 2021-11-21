@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package halsteadsmeasure;
+package it.westfox5.ghidra.halsteadsmeasure;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -25,6 +25,8 @@ import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.Msg;
+import it.westfox5.ghidra.halsteadsmeasure.calculator.HMCalculator;
+import it.westfox5.ghidra.halsteadsmeasure.calculator.HMCalculatorFactory;
 
 /**
  * TODO: Provide class-level documentation that describes what this plugin does.
@@ -38,7 +40,7 @@ import ghidra.util.Msg;
 	description = "Plugin long description goes here."
 )
 //@formatter:on
-public class HalsteadsMeasurePlugin extends ProgramPlugin {	
+public class HMPlugin extends ProgramPlugin {	
 
 	/**** ALLOWED CHANGES ****/
 	private static Boolean DEBUG = false;
@@ -50,24 +52,39 @@ public class HalsteadsMeasurePlugin extends ProgramPlugin {
 	 * 
 	 * @param tool The plugin tool that this plugin is added to.
 	 */
-	public HalsteadsMeasurePlugin(PluginTool tool) {
+	public HMPlugin(PluginTool tool) {
 		super(tool, false, false);
 
 		createActions();
 	}
+	
+	public HalsteadsMeasure calculateForMainFunction() throws HMException {
+		
+		// function calculator
+		String functionName = "main";
+		HMCalculator calculator = HMCalculatorFactory.functionCalculator(this, functionName);
+
+		HalsteadsMeasure hm = calculator.getHalsteadMeasures();
+		if (hm == null) throw new HMException("Cannot calculate Halstead's Measures for function `"+functionName+"`");
+		return hm;
+	}
 
 	
 	private void createActions() {
-		final HalsteadsMeasurePlugin plugin = this;
+		final HMPlugin plugin = this;
 		
 		DockingAction action = new DockingAction("Calculate Halstead's Measures", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				HalsteadsMeasureCalculator calculator = new HalsteadsMeasureCalculator(plugin);
-
-				String functionName = "main";
-				HalsteadsMeasure hm = calculator.calculateForFunction(functionName);
-				if (hm == null) return;
+				
+				HalsteadsMeasure hm = null;
+				try {
+					hm = plugin.calculateForMainFunction();
+				} catch(HMException e) {
+					e.printStackTrace();
+					plugin.errorMsg(this, e.getMessage());
+				}
+				
 				
 				// TODO implement proper serialization of tokens
 				/*
@@ -101,9 +118,9 @@ public class HalsteadsMeasurePlugin extends ProgramPlugin {
 				"\n" + 	"---- Halstead's Measures ----------------------------"   + "\n" +
 						" Unique operators (n1):\t"+ hm.getNumDistinctOperators() + "\n" +//: \n" + uniqueOpStr);
 						" Unique operands  (n2):\t"+ hm.getNumDistinctOperands()  + "\n" +//: \n" + uniqueOpndStr);
-						" Total operators  (N1):\t"+ hm.getNumTotalOperators()    + "\n" +
-						" Total operands   (N2):\t"+ hm.getNumTotalOperands()     + "\n" +
-						"-----------------------------------------------------"
+						" Total operators  (N1):\t"+ hm.getNumOperators()         + "\n" +
+						" Total operands   (N2):\t"+ hm.getNumOperands()          + "\n" +
+						"-----------------------------------------------------"   + "\n" // put "(HMPlugin)" in new line
 					);
 			}
 
@@ -119,15 +136,15 @@ public class HalsteadsMeasurePlugin extends ProgramPlugin {
 	}
 
 	/* convenience method for debugging */
-	protected void debugMsg(Object originator, Object msg) {
+	public void debugMsg(Object originator, Object msg) {
 		if (DEBUG) infoMsg(originator, msg);
 	}
 	/* convenience method for info msg reporting */
-	protected void infoMsg(Object originator, Object msg) {
+	public void infoMsg(Object originator, Object msg) {
 		Msg.info(originator, msg);
 	}
 	/* convenience method for error msg reporting */
-	protected void errorMsg(Object originator, Object msg) {
+	public void errorMsg(Object originator, Object msg) {
 		Msg.error(originator, msg);
 	}
 }

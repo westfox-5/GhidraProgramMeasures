@@ -1,4 +1,4 @@
-package halsteadsmeasure;
+package it.westfox5.ghidra.halsteadsmeasure.calculator.impl;
 
 import java.util.List;
 
@@ -6,18 +6,25 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionIterator;
 import ghidra.program.model.listing.Listing;
-import halsteadsmeasure.util.StringUtils;
+import it.westfox5.ghidra.halsteadsmeasure.HMException;
+import it.westfox5.ghidra.halsteadsmeasure.HMPlugin;
+import it.westfox5.ghidra.halsteadsmeasure.HalsteadsMeasure;
+import it.westfox5.ghidra.halsteadsmeasure.calculator.HMCalculator;
+import it.westfox5.ghidra.halsteadsmeasure.util.StringUtils;
 
-public class HalsteadsMeasureCalculator {
+public class HMFunctionCalculator implements HMCalculator {
 	private static final String RET_INSTR_MNEMONIC_STR = "RET";
 	
-	private final HalsteadsMeasurePlugin plugin;
+	private final HMPlugin plugin;
+	private final String fnName;
 	
-	public HalsteadsMeasureCalculator(HalsteadsMeasurePlugin plugin) {
+	public HMFunctionCalculator(HMPlugin plugin, String functionName) {
 		this.plugin = plugin;
+		this.fnName = functionName;
+		
 	}
 	
-	private Function findFunction(String fnName) {
+	private Function findFunction() {
 		if (StringUtils.isEmpty(fnName)) {
 			return null;
 		}
@@ -37,10 +44,10 @@ public class HalsteadsMeasureCalculator {
 	}
 	
 	
-	public HalsteadsMeasure calculateForFunction(String fnName) {
+	public HalsteadsMeasure getHalsteadMeasures() throws HMException{
 		HalsteadsMeasure.Builder builder = HalsteadsMeasure.make();
 		
-		Function function = findFunction(fnName);
+		Function function = findFunction();
 		if (function == null) {
 			return builder.build();
 		}
@@ -62,9 +69,8 @@ public class HalsteadsMeasureCalculator {
 			
 			{ /* OPERATOR */
 				String op = instr.getMnemonicString();
-				// TODO is this check needed?
 				if (StringUtils.isEmpty(op)) {
-					continue;
+					throw new HMException("Empty operator found at addr: '"+instr.getAddressString(false, true)+"'");
 				}
 
 				if (RET_INSTR_MNEMONIC_STR.equals(op)) {
@@ -80,9 +86,8 @@ public class HalsteadsMeasureCalculator {
 				String opnd;
 				for (int i=0;i<numOperands;i++) {
 					opnd = instr.getDefaultOperandRepresentation(i);
-					// TODO is this check needed?
 					if (StringUtils.isEmpty(opnd)) { 
-						continue;
+						throw new HMException("Empty operand found at addr: '"+instr.getAddressString(false, true)+"'");
 					}
 					
 					builder.addOperand(opnd, instr);

@@ -1,4 +1,4 @@
-package halsteadsmeasure.util;
+package it.westfox5.ghidra.halsteadsmeasure.util;
 
 public class StringUtils {
 
