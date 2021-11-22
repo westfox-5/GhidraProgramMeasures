@@ -20,8 +20,7 @@ public class HMFunctionCalculator implements HMCalculator {
 	
 	public HMFunctionCalculator(HMPlugin plugin, String functionName) {
 		this.plugin = plugin;
-		this.fnName = functionName;
-		
+		this.fnName = functionName;	
 	}
 	
 	private Function findFunction() {
@@ -45,7 +44,8 @@ public class HMFunctionCalculator implements HMCalculator {
 	
 	
 	public HalsteadsMeasure getHalsteadMeasures() throws HMException{
-		HalsteadsMeasure.Builder builder = HalsteadsMeasure.make();
+		String programName = plugin.getCurrentProgram().getName();
+		HalsteadsMeasure.Builder builder = HalsteadsMeasure.make(programName);
 		
 		Function function = findFunction();
 		if (function == null) {

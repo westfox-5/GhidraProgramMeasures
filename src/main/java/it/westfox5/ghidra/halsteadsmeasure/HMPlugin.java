@@ -15,6 +15,9 @@
  */
 package it.westfox5.ghidra.halsteadsmeasure;
 
+import java.io.File;
+import java.io.IOException;
+
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
@@ -27,6 +30,8 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.Msg;
 import it.westfox5.ghidra.halsteadsmeasure.calculator.HMCalculator;
 import it.westfox5.ghidra.halsteadsmeasure.calculator.HMCalculatorFactory;
+import it.westfox5.ghidra.halsteadsmeasure.export.HMExporter;
+import it.westfox5.ghidra.halsteadsmeasure.export.HMExporterFactory;
 
 /**
  * TODO: Provide class-level documentation that describes what this plugin does.
@@ -68,6 +73,12 @@ public class HMPlugin extends ProgramPlugin {
 		if (hm == null) throw new HMException("Cannot calculate Halstead's Measures for function `"+functionName+"`");
 		return hm;
 	}
+	
+	public File exportToJSONFile(HalsteadsMeasure hm) throws HMException, IOException {
+		String filename = "halsteads_measure";
+		HMExporter exporter = HMExporterFactory.jsonExporter(filename);
+		return exporter.export(hm);
+	}
 
 	
 	private void createActions() {
@@ -77,6 +88,16 @@ public class HMPlugin extends ProgramPlugin {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				
+				/*
+				 *	ATTENTION
+				 *	the body of this function is essentially used for 
+				 *  testing purposes!
+				 *  
+				 *  all the hard-coded functions can be easily generalized/parameterized when all is functioning
+				 * 
+				 */
+				
+				// LOAD MEASURES FROM PROGRAM
 				HalsteadsMeasure hm = null;
 				try {
 					hm = plugin.calculateForMainFunction();
@@ -84,35 +105,8 @@ public class HMPlugin extends ProgramPlugin {
 					e.printStackTrace();
 					plugin.errorMsg(this, e.getMessage());
 				}
-				
-				
-				// TODO implement proper serialization of tokens
-				/*
-				String uniqueOpStr = hm.getOpOccurrences().entrySet().stream()
-					.map(entry -> { 
-						List<Instruction> value = entry.getValue();
-						String addrOfOcc = value.stream()
-								.map(i -> i.getAddress().toString())
-								.sorted()
-								.collect(Collectors.joining(", "));
-						return entry.getKey() + " - found @ ["+addrOfOcc+"] ";
-					})
-					.sorted()
-					.collect(Collectors.joining("\n"));
-				
-				String uniqueOpndStr = hm.getOpndOccurrences().entrySet().stream()
-					.map(entry -> { 
-						List<Instruction> value = entry.getValue();
-						String addrOfOcc = value.stream()
-								.map(i -> i.getAddress().toString())
-								.sorted()
-								.collect(Collectors.joining(", "));
-						return entry.getKey() + " - found @ ["+addrOfOcc+"] ";
-					})
-					.sorted()
-					.collect(Collectors.joining("\n"));
-				*/
-				
+			
+
 				// TODO find a way to create dialogs (@see Msg.showInfo)
 				infoMsg(plugin,
 				"\n" + 	"---- Halstead's Measures ----------------------------"   + "\n" +
@@ -122,6 +116,16 @@ public class HMPlugin extends ProgramPlugin {
 						" Total operands   (N2):\t"+ hm.getNumOperands()          + "\n" +
 						"-----------------------------------------------------"   + "\n" // put "(HMPlugin)" in new line
 					);
+				
+				// DUMP MEASURES TO FILE
+				try {
+					File file = exportToJSONFile(hm);
+					infoMsg(plugin, "Successfully dumped data to `"+file.getAbsolutePath()+"`.");
+				} catch (HMException | IOException e) {
+					e.printStackTrace();
+					plugin.errorMsg(this, e.getMessage());
+
+				}
 			}
 
 			@Override
