@@ -2,10 +2,9 @@ package it.westfox5.ghidra.export.impl;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Map;
+import java.util.List;
 
 import it.westfox5.ghidra.Measure;
-import it.westfox5.ghidra.Measure.MeasureKey;
 import it.westfox5.ghidra.MeasuredProgram;
 import it.westfox5.ghidra.export.Exporter;
 import it.westfox5.ghidra.export.FileExtension;
@@ -49,17 +48,21 @@ public class JSONExporter extends Exporter {
 		formatter.write(quotate("analysis") + ": [");
 		formatter.indent().write("{");
 
-		Map<MeasureKey, Measure<?>> measures = mp.getMeasures();
+		List<Measure<?>> orderedMeasures = mp.getOrderedMeasures();
 		formatter.indent().write(quotate(mp.getMeasureName()) + ": {");
 		formatter.indent();
-		for (MeasureKey key: measures.keySet()) {
-			Measure<?> measure = measures.get(key);
-			formatter.write(quotate(key.getName()) + ": " + quotate(measure.getValue()) + ", ");
+		for (Measure<?> measure: orderedMeasures) {
+			formatter.write(quotate(measure.getName()) + ": {");
+			formatter.indent();
+			formatter.write(quotate("name") + ": " + quotate(measure.getName()) + ",");
+			formatter.write(quotate("value") + ": " + quotate(measure.getValue()) + ",");
+			formatter.write(quotate("description") + ": " + quotate(measure.getDescription()) + ",");
+			formatter.outdent().write("},");
 		}
+		formatter.outdent().write("},");
 		formatter.outdent().write("},");
 		formatter.outdent().write("],");
 
-		formatter.outdent().write("},");
 		formatter.outdent().write("},");
 		formatter.outdent().write("],");
 		formatter.outdent().write("}") ;

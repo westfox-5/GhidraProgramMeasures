@@ -1,6 +1,7 @@
 package it.westfox5.ghidra;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import ghidra.program.model.listing.Program;
@@ -17,6 +18,7 @@ public abstract class MeasuredProgram {
 	}
 	
 	public abstract String getMeasureName();
+	public abstract List<Measure<?>> getOrderedMeasures();
 	
 	public void addMeasure(Measure<?> measure) {
 		measures.put(measure.getKey(), measure);

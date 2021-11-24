@@ -11,6 +11,7 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import it.westfox5.ghidra.MeasuredProgram;
 import it.westfox5.ghidra.NumericMeasure;
+import it.westfox5.ghidra.Measure;
 import it.westfox5.ghidra.Measure.MeasureKey;
 import it.westfox5.ghidra.halsteadsmeasure.HMEntry.HMType;
 import it.westfox5.ghidra.util.NumberUtils;
@@ -126,10 +127,20 @@ public class HalsteadsMeasure extends MeasuredProgram {
 		addMeasure(new NumericMeasure(HalsteadsMeasureKey.EST_ERRORS.getMeasureKey(), getEstimatedErrors())); 
 	}
 	
-	
 	@Override
 	public String getMeasureName() {
 		return "Halstead";
+	}
+	
+	
+
+	@Override
+	public List<Measure<?>> getOrderedMeasures() {
+		List<Measure<?>> list = new ArrayList<>();
+		for (HalsteadsMeasureKey hmKey: HalsteadsMeasureKey.values()) {
+			list.add(getMeasures().get(hmKey.getMeasureKey()));
+		}
+		return list;
 	}
 
 	public String getProgramName() {
