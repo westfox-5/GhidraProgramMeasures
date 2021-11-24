@@ -75,7 +75,7 @@ public class HMJSONExporter extends HMExporter {
 	}
 	
 	private String quotate(BigDecimal bd) {
-		return quotate(bd.setScale(2, RoundingMode.HALF_UP).toPlainString());
+		return quotate(bd.setScale(3, RoundingMode.HALF_UP).toPlainString());
 	}
 	private String quotate(String s) {
 		return "\""+s+"\"";

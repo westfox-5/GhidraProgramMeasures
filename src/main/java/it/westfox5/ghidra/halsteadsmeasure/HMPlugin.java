@@ -59,7 +59,7 @@ public class HMPlugin extends ProgramPlugin {
 	 */
 	public HMPlugin(PluginTool tool) {
 		super(tool, false, false);
-
+		
 		createActions();
 	}
 	
