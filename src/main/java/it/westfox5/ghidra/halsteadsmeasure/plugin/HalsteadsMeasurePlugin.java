@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package it.westfox5.ghidra.halsteadsmeasure;
+package it.westfox5.ghidra.halsteadsmeasure.plugin;
 
 import java.io.File;
-import java.io.IOException;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -27,11 +26,15 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.util.Msg;
-import it.westfox5.ghidra.halsteadsmeasure.calculator.HMCalculator;
-import it.westfox5.ghidra.halsteadsmeasure.calculator.HMCalculatorFactory;
-import it.westfox5.ghidra.halsteadsmeasure.export.HMExporter;
-import it.westfox5.ghidra.halsteadsmeasure.export.HMExporterFactory;
+import ghidra.program.model.listing.Program;
+import it.westfox5.ghidra.calculator.CalculationException;
+import it.westfox5.ghidra.calculator.Calculator;
+import it.westfox5.ghidra.calculator.CalculatorFactory;
+import it.westfox5.ghidra.export.ExportException;
+import it.westfox5.ghidra.export.Exporter;
+import it.westfox5.ghidra.export.ExporterFactory;
+import it.westfox5.ghidra.halsteadsmeasure.HalsteadsMeasure;
+import it.westfox5.ghidra.util.logger.Logger;
 
 /**
  * TODO: Provide class-level documentation that describes what this plugin does.
@@ -45,44 +48,40 @@ import it.westfox5.ghidra.halsteadsmeasure.export.HMExporterFactory;
 	description = "Plugin long description goes here."
 )
 //@formatter:on
-public class HMPlugin extends ProgramPlugin {	
-
-	/**** ALLOWED CHANGES ****/
-	private static Boolean DEBUG = false;
-	/**** END ALLOWED CHANGES SECTION****/
-	
+public class HalsteadsMeasurePlugin extends ProgramPlugin {	
 	
 	/**
 	 * Plugin constructor.
 	 * 
 	 * @param tool The plugin tool that this plugin is added to.
 	 */
-	public HMPlugin(PluginTool tool) {
+	public HalsteadsMeasurePlugin(PluginTool tool) {
 		super(tool, false, false);
 		
 		createActions();
 	}
 	
-	public HalsteadsMeasure calculateForMainFunction() throws HMException {
+	public HalsteadsMeasure calculateForMainFunction() throws CalculationException {
 		
 		// function calculator
+		Program program = getCurrentProgram();
 		String functionName = "main";
-		HMCalculator calculator = HMCalculatorFactory.functionCalculator(this, functionName);
+		Calculator calculator = CalculatorFactory.functionCalculator(program, functionName);
 
 		HalsteadsMeasure hm = calculator.getHalsteadMeasures();
-		if (hm == null) throw new HMException("Cannot calculate Halstead's Measures for function `"+functionName+"`");
+		if (hm == null) throw new CalculationException("Cannot calculate Halstead's Measures for function `"+functionName+"`");
 		return hm;
 	}
 	
-	public File exportToJSONFile(HalsteadsMeasure hm) throws HMException, IOException {
+	public File exportToJSONFile(HalsteadsMeasure hm) throws ExportException {
 		String filename = "halsteads_measure";
-		HMExporter exporter = HMExporterFactory.jsonExporter(filename);
+		Exporter exporter = ExporterFactory.jsonExporter(filename);
 		return exporter.export(hm);
 	}
 
 	
 	private void createActions() {
-		final HMPlugin plugin = this;
+		final HalsteadsMeasurePlugin plugin = this;
 		
 		DockingAction action = new DockingAction("Calculate Halstead's Measures", getName()) {
 			@Override
@@ -101,31 +100,29 @@ public class HMPlugin extends ProgramPlugin {
 				HalsteadsMeasure hm = null;
 				try {
 					hm = plugin.calculateForMainFunction();
-				} catch(HMException e) {
-					e.printStackTrace();
-					plugin.errorMsg(this, e.getMessage());
-				}
-			
-
-				// TODO find a way to create dialogs (@see Msg.showInfo)
-				infoMsg(plugin,
-				"\n" + 	"---- Halstead's Measures ----------------------------"   + "\n" +
-						" Unique operators (n1):\t"+ hm.getNumDistinctOperators() + "\n" +//: \n" + uniqueOpStr);
-						" Unique operands  (n2):\t"+ hm.getNumDistinctOperands()  + "\n" +//: \n" + uniqueOpndStr);
-						" Total operators  (N1):\t"+ hm.getNumOperators()         + "\n" +
-						" Total operands   (N2):\t"+ hm.getNumOperands()          + "\n" +
-						"-----------------------------------------------------"   + "\n" // put "(HMPlugin)" in new line
-					);
 				
-				// DUMP MEASURES TO FILE
-				try {
-					File file = exportToJSONFile(hm);
-					infoMsg(plugin, "Successfully dumped data to `"+file.getAbsolutePath()+"`.");
-				} catch (HMException | IOException e) {
+				
+	
+					// TODO find a way to create dialogs (@see Msg.showInfo)
+					Logger.msgLogger.info(this,
+					"\n" + 	"---- Halstead's Measures ----------------------------"   + "\n" +
+							" Unique operators (n1):\t"+ hm.getNumDistinctOperators() + "\n" +//: \n" + uniqueOpStr);
+							" Unique operands  (n2):\t"+ hm.getNumDistinctOperands()  + "\n" +//: \n" + uniqueOpndStr);
+							" Total operators  (N1):\t"+ hm.getNumOperators()         + "\n" +
+							" Total operands   (N2):\t"+ hm.getNumOperands()          + "\n" +
+							"-----------------------------------------------------"   + "\n" // put "(HMPlugin)" in new line
+						);
+					
+					// DUMP MEASURES TO FILE
+				
+					exportToJSONFile(hm);
+					
+					
+				} catch (CalculationException | ExportException e) {
 					e.printStackTrace();
-					plugin.errorMsg(this, e.getMessage());
+					Logger.msgLogger.err(this, e.getMessage());
 
-				}
+				} 
 			}
 
 			@Override
@@ -137,18 +134,5 @@ public class HMPlugin extends ProgramPlugin {
 		// TODO externalize strings
 		action.setMenuBarData(new MenuData(new String[] { "Window", "Halstead's Measures" }));
 		tool.addAction(action);
-	}
-
-	/* convenience method for debugging */
-	public void debugMsg(Object originator, Object msg) {
-		if (DEBUG) infoMsg(originator, msg);
-	}
-	/* convenience method for info msg reporting */
-	public void infoMsg(Object originator, Object msg) {
-		Msg.info(originator, msg);
-	}
-	/* convenience method for error msg reporting */
-	public void errorMsg(Object originator, Object msg) {
-		Msg.error(originator, msg);
 	}
 }

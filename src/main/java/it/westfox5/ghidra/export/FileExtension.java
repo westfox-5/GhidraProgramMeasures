@@ -1,4 +1,4 @@
-package it.westfox5.ghidra.halsteadsmeasure.export;
+package it.westfox5.ghidra.export;
 
 
 /** Mapping of supported export types */ 
