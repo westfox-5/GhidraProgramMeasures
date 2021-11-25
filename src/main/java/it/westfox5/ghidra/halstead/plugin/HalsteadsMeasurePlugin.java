@@ -66,7 +66,7 @@ public class HalsteadsMeasurePlugin extends ProgramPlugin {
 		
 		// function calculator
 		Program program = getCurrentProgram();
-		String functionName = "xf";
+		String functionName = "main";
 		Analyzer calculator = AnalyzerFactory.functionCalculator(program, functionName);
 
 		Halstead hm = calculator.getHalsteadMeasures();
