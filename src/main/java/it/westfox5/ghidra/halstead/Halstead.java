@@ -1,4 +1,4 @@
-package it.westfox5.ghidra.halsteadsmeasure;
+package it.westfox5.ghidra.halstead;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -10,64 +10,20 @@ import java.util.stream.Collectors;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import it.westfox5.ghidra.MeasuredProgram;
-import it.westfox5.ghidra.NumericMeasure;
-import it.westfox5.ghidra.Measure;
-import it.westfox5.ghidra.Measure.MeasureKey;
-import it.westfox5.ghidra.halsteadsmeasure.HMEntry.HMType;
+import it.westfox5.ghidra.halstead.Halstead.Entry.EntryType;
+import it.westfox5.ghidra.measure.Measure;
+import it.westfox5.ghidra.measure.NumericMeasure;
 import it.westfox5.ghidra.util.NumberUtils;
 
 /**		
- * number of unique (distinct) operators (n1)
- * number of unique (distinct) operands (n2)
- * total number of operators (N1)
- * total number of operands (N2).
- * 
  * Wrapper class for the Halstead's measures.
  */
-public class HalsteadsMeasure extends MeasuredProgram {
-	
-	public static enum HalsteadsMeasureKey {
-		NUM_DISTINCT_OPS("n1", "Number of distinct operators."),
-		NUM_DISTINCT_OPNDS("n2", "Number of distinct operands."),
-		NUM_OPS("N1", "Number of operators."),
-		NUM_OPNDS("N2", "Number of operands."),
-		VOCABULARY("n", "Program vocabulary - n = n1 + n2"),
-		LEN("N", "Program length - N = N1 + N2"),
-		EST_LEN("N^", "Program estimated length N^ = n1*log2(n1) + n2*log2(n2)"),
-		VOLUME("V", "Program volume - V = N*log2(n)"),
-		DIFFICULTY("D", "Program difficulty - D = (n1/2) * (N2/n2)"),
-		EFFORT("E", "Program effort of programming - E = D * V"),
-		CODING_TIME("T", "Time taken to code the program - T = E / 18"),
-		EST_ERRORS("B", "Number of estimated errors - B = V / 3000"),
-
-		;
-		
-		private final MeasureKey key;
-		private HalsteadsMeasureKey(String name, String descr) {
-			this.key = new MeasureKey(name, descr);
-		}
-		
-		public MeasureKey getMeasureKey() {
-			return this.key;
-		}
-		
-		private static final Map<String, MeasureKey> byName;
-		static {
-			byName = new HashMap<>();
-			for (HalsteadsMeasureKey hmKey: values()) {
-				byName.put(hmKey.getMeasureKey().getName(), hmKey.getMeasureKey());
-			}
-		}
-		
-		public static MeasureKey getKeyByName(String name) {
-			return byName.get(name);
-		}
-	}
+public class Halstead extends MeasuredProgram {
 	
 	/** Keep the pointer to the instruction for each operator */
-	private List<HMEntry> operators;
+	private List<Entry> operators;
 	/** Keep the pointer to the instruction for each operand */
-	private List<HMEntry> operands;
+	private List<Entry> operands;
 		
 	/** BigDecimal representation */
 	private BigDecimal n1, N1; // num. operators [distinct, total]
@@ -75,15 +31,15 @@ public class HalsteadsMeasure extends MeasuredProgram {
 	
 	private boolean loaded;
 		
-	public static HalsteadsMeasure.Builder make(Program program) {
-		return new HalsteadsMeasure.Builder(program);
+	public static Halstead.Builder make(Program program) {
+		return new Halstead.Builder(program);
 	}
 
-	private HalsteadsMeasure(Program program) {
+	private Halstead(Program program) {
 		super(program);
 	}
 	
-	private void load(Map<String, List<HMEntry>> opOccurrences, Map<String, List<HMEntry>> opndOccurrences) {
+	private void load(Map<String, List<Entry>> opOccurrences, Map<String, List<Entry>> opndOccurrences) {
 		// @see Pitfall #1 in: <a href="https://blogs.oracle.com/javamagazine/post/four-common-pitfalls-of-the-bigdecimal-class-and-how-to-avoid-them">https:blogs.oracle.com</a>
 		if (!loaded) {
 			// distinct operators/operands number is the number of keys we have in the map
@@ -105,26 +61,26 @@ public class HalsteadsMeasure extends MeasuredProgram {
 						.collect(Collectors.toList());
 			this.N2 = BigDecimal.valueOf(operands.size());
 			
-			fillMeasures();
+			initMeasures();
 			
 
 			loaded = true;
 		}
 	}
 
-	private void fillMeasures() {
-		addMeasure(new NumericMeasure(HalsteadsMeasureKey.NUM_DISTINCT_OPS.getMeasureKey(), getNumDistinctOperators()));
-		addMeasure(new NumericMeasure(HalsteadsMeasureKey.NUM_DISTINCT_OPNDS.getMeasureKey(), getNumDistinctOperands()));
-		addMeasure(new NumericMeasure(HalsteadsMeasureKey.NUM_OPS.getMeasureKey(), getNumOperators()));
-		addMeasure(new NumericMeasure(HalsteadsMeasureKey.NUM_OPNDS.getMeasureKey(), getNumOperands()));
-		addMeasure(new NumericMeasure(HalsteadsMeasureKey.VOCABULARY.getMeasureKey(), getVocabulary()));
-		addMeasure(new NumericMeasure(HalsteadsMeasureKey.LEN.getMeasureKey(), getLength()));
-		addMeasure(new NumericMeasure(HalsteadsMeasureKey.EST_LEN.getMeasureKey(), getEstimatedLength()));
-		addMeasure(new NumericMeasure(HalsteadsMeasureKey.VOLUME.getMeasureKey(), getVolume()));
-		addMeasure(new NumericMeasure(HalsteadsMeasureKey.DIFFICULTY.getMeasureKey(), getDifficulty()));
-		addMeasure(new NumericMeasure(HalsteadsMeasureKey.EFFORT.getMeasureKey(), getEffort()));
-		addMeasure(new NumericMeasure(HalsteadsMeasureKey.CODING_TIME.getMeasureKey(), getCodingTime()));
-		addMeasure(new NumericMeasure(HalsteadsMeasureKey.EST_ERRORS.getMeasureKey(), getEstimatedErrors())); 
+	private void initMeasures() {
+		addMeasure(new NumericMeasure(HalsteadMeasure.NUM_DISTINCT_OPS.key(), getNumDistinctOperators()));
+		addMeasure(new NumericMeasure(HalsteadMeasure.NUM_DISTINCT_OPNDS.key(), getNumDistinctOperands()));
+		addMeasure(new NumericMeasure(HalsteadMeasure.NUM_OPS.key(), getNumOperators()));
+		addMeasure(new NumericMeasure(HalsteadMeasure.NUM_OPNDS.key(), getNumOperands()));
+		addMeasure(new NumericMeasure(HalsteadMeasure.VOCABULARY.key(), getVocabulary()));
+		addMeasure(new NumericMeasure(HalsteadMeasure.LEN.key(), getLength()));
+		addMeasure(new NumericMeasure(HalsteadMeasure.EST_LEN.key(), getEstimatedLength()));
+		addMeasure(new NumericMeasure(HalsteadMeasure.VOLUME.key(), getVolume()));
+		addMeasure(new NumericMeasure(HalsteadMeasure.DIFFICULTY.key(), getDifficulty()));
+		addMeasure(new NumericMeasure(HalsteadMeasure.EFFORT.key(), getEffort()));
+		addMeasure(new NumericMeasure(HalsteadMeasure.CODING_TIME.key(), getCodingTime()));
+		addMeasure(new NumericMeasure(HalsteadMeasure.EST_ERRORS.key(), getEstimatedErrors()));
 	}
 	
 	@Override
@@ -132,13 +88,12 @@ public class HalsteadsMeasure extends MeasuredProgram {
 		return "Halstead";
 	}
 	
-	
 
 	@Override
 	public List<Measure<?>> getOrderedMeasures() {
 		List<Measure<?>> list = new ArrayList<>();
-		for (HalsteadsMeasureKey hmKey: HalsteadsMeasureKey.values()) {
-			list.add(getMeasures().get(hmKey.getMeasureKey()));
+		for (HalsteadMeasure hmKey: HalsteadMeasure.values()) {
+			list.add(getMeasures().get(hmKey.key()));
 		}
 		return list;
 	}
@@ -147,11 +102,11 @@ public class HalsteadsMeasure extends MeasuredProgram {
 		return getProgram().getName();
 	}
 
-	public List<HMEntry> getOperands() {
+	public List<Entry> getOperands() {
 		return operands;
 	}
 
-	public void setOperands(List<HMEntry> operands) {
+	public void setOperands(List<Entry> operands) {
 		this.operands = operands;
 	}
 
@@ -254,37 +209,36 @@ public class HalsteadsMeasure extends MeasuredProgram {
 	}
 
 	public static class Builder {
-		
 		private Program program;
 		
 		/** Keep the pointer to the instruction for each operator */
-		private final Map<String, List<HMEntry>> opOccurrences = new HashMap<>();
+		private final Map<String, List<Entry>> opOccurrences = new HashMap<>();
 		/** Keep the pointer to the instruction for each operand */
-		private final Map<String, List<HMEntry>> opndOccurrences = new HashMap<>();
+		private final Map<String, List<Entry>> opndOccurrences = new HashMap<>();
 		
 		public Builder(Program program) {
 			this.program = program;
 		}
 		
 		public Builder addOperator(String opDescriptor, Instruction instruction) {
-			_addToMap(opOccurrences, opDescriptor, new HMEntry(HMType.OPERATOR, opDescriptor, instruction));
+			_addToMap(opOccurrences, opDescriptor, new Entry(EntryType.OPERATOR, opDescriptor, instruction));
 			return this;
 		}
 		
 		public Builder addOperand(String opndDescriptor, Instruction instruction) {
-			_addToMap(opndOccurrences, opndDescriptor, new HMEntry(HMType.OPERAND, opndDescriptor, instruction));
+			_addToMap(opndOccurrences, opndDescriptor, new Entry(EntryType.OPERAND, opndDescriptor, instruction));
 			return this;
 		}
 	
-		public HalsteadsMeasure build() {
-			HalsteadsMeasure hm = new HalsteadsMeasure(program);
+		public Halstead build() {
+			Halstead hm = new Halstead(program);
 			hm.load(opOccurrences, opndOccurrences);
 			
 			return hm;
 		}
 		
 
-		private <V extends HMEntry> void _addToMap(Map<String, List<V>> map, String key, V value) {
+		private <V extends Entry> void _addToMap(Map<String, List<V>> map, String key, V value) {
 			List<V> list = map.get(key);
 			if (list == null) {
 				list = new ArrayList<>();
@@ -294,5 +248,37 @@ public class HalsteadsMeasure extends MeasuredProgram {
 			list.add(value);
 		}
 	}
+	
+	public static class Entry {
+		public static enum EntryType {
+			OPERATOR, OPERAND;
+		}
+		
+		private final EntryType type;
+		private final String descriptor;
+		private final Instruction instruction;
+		
+		public Entry(EntryType type, String descriptor, Instruction instruction) {
+			this.type = type;
+			this.descriptor = descriptor;
+			this.instruction = instruction;
+		}
+	
+		public EntryType getType() {
+			return type;
+		}
+		
+		public String getDescriptor() {
+			return descriptor;
+		}
+	
+		public Instruction getInstruction() {
+			return instruction;
+		}
+		
+		
+		
+	}
+
 
 }

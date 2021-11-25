@@ -1,4 +1,4 @@
-package it.westfox5.ghidra.calculator.impl;
+package it.westfox5.ghidra.analyzer.impl;
 
 import java.util.List;
 
@@ -7,42 +7,38 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionIterator;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
-import it.westfox5.ghidra.calculator.Calculator;
-import it.westfox5.ghidra.calculator.CalculationException;
-import it.westfox5.ghidra.halsteadsmeasure.HalsteadsMeasure;
+import it.westfox5.ghidra.analyzer.AnalysisException;
+import it.westfox5.ghidra.analyzer.Analyzer;
+import it.westfox5.ghidra.halstead.Halstead;
 import it.westfox5.ghidra.util.StringUtils;
 import it.westfox5.ghidra.util.logger.Logger;
 
-public class FunctionCalculator implements Calculator {
+public class FunctionAnalyzer implements Analyzer {
 	private static final String RET_INSTR_MNEMONIC_STR = "RET";
 
 	private final String fnName;
 	private final Program program;
 	
-	public FunctionCalculator(Program program, String functionName) {
+	public FunctionAnalyzer(Program program, String functionName) {
 		this.program = program;
 		this.fnName = functionName;	
 	}
 	
-	private Function findFunction() {
+	private Function findFunction() throws AnalysisException {
 		if (StringUtils.isEmpty(fnName)) {
-			Logger.msgLogger.err(this, "No function name provided");
-			return null;
+			throw new AnalysisException("No function name provided");
 		}
 		
 		if (program == null) {
-			Logger.msgLogger.err(this, "No program provided");
-			return null;
+			throw new AnalysisException("No program provided");
 		}
 		
 		List<Function> fns = program.getListing().getGlobalFunctions(fnName);
 		if (!(fns != null && !fns.isEmpty())) {
-			Logger.msgLogger.err(this, "No function found in current program with name `"+fnName+"`.");
-			return null;
+			throw new AnalysisException("No function found in current program with name `"+fnName+"`.");
 		}
 		if (fns.size() > 1) {
-			Logger.msgLogger.err(this, "More than 1 function found in current program with name `"+fnName+"`.");
-			return null;
+			throw new AnalysisException("More than 1 function found in current program with name `"+fnName+"`.");
 		}
 		
 		// fns.size() == 1
@@ -50,8 +46,8 @@ public class FunctionCalculator implements Calculator {
 	}
 	
 	
-	public HalsteadsMeasure getHalsteadMeasures() throws CalculationException{
-		HalsteadsMeasure.Builder builder = HalsteadsMeasure.make(program);
+	public Halstead getHalsteadMeasures() throws AnalysisException{
+		Halstead.Builder builder = Halstead.make(program);
 		
 		Function function = findFunction();
 		if (function == null) {
@@ -61,9 +57,6 @@ public class FunctionCalculator implements Calculator {
 		Logger.msgLogger.debug(this, "###################### START PARSING `"+fnName+"` [entry_point: `"+function.getEntryPoint()+"`] ######################");
 
 		Listing listing = program.getListing();
-		
-		//Variable[] localVariables = mainFn.getLocalVariables();
-		//int numLocalVariables = localVariables != null ? localVariables.length : 0;
 		
 		// get instructions starting @ the function entry point
 		InstructionIterator instructions = listing.getInstructions(function.getEntryPoint(), true);
@@ -76,11 +69,11 @@ public class FunctionCalculator implements Calculator {
 			{ /* OPERATOR */
 				String op = instr.getMnemonicString();
 				if (StringUtils.isEmpty(op)) {
-					throw new CalculationException("Empty operator found at addr: '"+instr.getAddressString(false, true)+"'");
+					throw new AnalysisException("Empty operator found at addr: '"+instr.getAddressString(false, true)+"'");
 				}
 
 				if (RET_INSTR_MNEMONIC_STR.equals(op)) {
-					retInstructionFound = true; 				// STOP 
+					retInstructionFound = true; // STOP 
 				}
 				
 				builder.addOperator(op, instr);
@@ -93,7 +86,7 @@ public class FunctionCalculator implements Calculator {
 				for (int i=0;i<numOperands;i++) {
 					opnd = instr.getDefaultOperandRepresentation(i);
 					if (StringUtils.isEmpty(opnd)) { 
-						throw new CalculationException("Empty operand found at addr: '"+instr.getAddressString(false, true)+"'");
+						throw new AnalysisException("Empty operand found at addr: '"+instr.getAddressString(false, true)+"'");
 					}
 					
 					builder.addOperand(opnd, instr);

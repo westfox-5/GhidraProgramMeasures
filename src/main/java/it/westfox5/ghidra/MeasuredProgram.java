@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import ghidra.program.model.listing.Program;
-import it.westfox5.ghidra.Measure.MeasureKey;
+import it.westfox5.ghidra.measure.Measure;
+import it.westfox5.ghidra.measure.MeasureKey;
 
 public abstract class MeasuredProgram {
 	

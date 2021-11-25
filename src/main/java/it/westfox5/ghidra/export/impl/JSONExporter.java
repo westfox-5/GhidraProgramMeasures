@@ -2,12 +2,13 @@ package it.westfox5.ghidra.export.impl;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Iterator;
 import java.util.List;
 
-import it.westfox5.ghidra.Measure;
 import it.westfox5.ghidra.MeasuredProgram;
 import it.westfox5.ghidra.export.Exporter;
-import it.westfox5.ghidra.export.FileExtension;
+import it.westfox5.ghidra.measure.Measure;
+import it.westfox5.ghidra.measure.MeasureKey;
 import it.westfox5.ghidra.util.Formatter;
 import it.westfox5.ghidra.util.logger.Logger;
 
@@ -15,57 +16,72 @@ import it.westfox5.ghidra.util.logger.Logger;
  * JSON implementation of the HMExporter.
  * 
  * File structure:
+ * ```
  * {
  * 	programs: [
  * 		{
  * 			name: String
  * 			analysis: {
- * 				halstead: {
- * 					dump of halsteads
- * 				},
- * 				-- future measures here --
+ *	 			halstead: {
+ *	 				-- halstead's measures here --
+ *	 			},
+ *				{
+ * 					-- future measures here --
+ * 				}
  * 			}
  * 		},
- * 		...
+ * 		-- other analyzed programs here --
  * 	]
  * }
+ * ```
  */
 public class JSONExporter extends Exporter {
 	
-	public JSONExporter(String filename) {
-		super(filename, FileExtension.JSON);
+	public JSONExporter(MeasuredProgram... programs) {
+		super(FileExtension.JSON, programs);
 	}
 
 	@Override
-	public String getFileContent(MeasuredProgram mp) {		
+	public String getFileContent() {		
 		Formatter formatter = new Formatter();
 		
+		// --- START ----
 		formatter.write("{");
+		
+		// -- Start `programs` ----
 		formatter.indent().write(quotate("programs")+": [");
-		formatter.indent().write("{");
-		// for now just one program per execution..
-		formatter.indent().write(quotate("name") + ": "+quotate(mp.getProgram().getName())+",");
-		formatter.write(quotate("analysis") + ": [");
-		formatter.indent().write("{");
 
-		List<Measure<?>> orderedMeasures = mp.getOrderedMeasures();
-		formatter.indent().write(quotate(mp.getMeasureName()) + ": {");
-		formatter.indent();
-		for (Measure<?> measure: orderedMeasures) {
-			formatter.write(quotate(measure.getName()) + ": {");
-			formatter.indent();
-			formatter.write(quotate("name") + ": " + quotate(measure.getName()) + ",");
-			formatter.write(quotate("value") + ": " + quotate(measure.getValue()) + ",");
-			formatter.write(quotate("description") + ": " + quotate(measure.getDescription()) + ",");
+		Iterator<MeasuredProgram> programsIter = super.programs.iterator();
+		while(programsIter.hasNext()) {
+			MeasuredProgram program = programsIter.next();
+			
+			// --- Start program ----
+			formatter.indent().write("{");
+			formatter.indent().write(quotate("name") + ": "+quotate(program.getProgram().getName())+",");
+			
+			// --- Start `analysis` ----
+			formatter.write(quotate("analysis") + ": {");
+		
+			// --- Start measures ----
+			formatter.indent().write(quotate(program.getMeasureName()) + ": {");
+			dumpMeasures(program, formatter);
+				
 			formatter.outdent().write("},");
-		}
-		formatter.outdent().write("},");
-		formatter.outdent().write("},");
-		formatter.outdent().write("],");
+			// --- End measures ----
+			
+			formatter.outdent().write("},");
+			// --- End `analysis` ----
+			
+			formatter.outdent().write("},");
+			// --- End program ----
 
-		formatter.outdent().write("},");
+		}
+		
 		formatter.outdent().write("],");
+		// --- End `programs` ----
+		
 		formatter.outdent().write("}") ;
+		// --- END ----
 		
 		String content = formatter.get();
 		if (!formatter.validateIndentation()) {
@@ -75,6 +91,26 @@ public class JSONExporter extends Exporter {
 		return content;
 	}
 
+	@Override
+	public void dumpMeasures(MeasuredProgram program, Formatter formatter) {
+		List<Measure<?>> orderedMeasures = program.getOrderedMeasures();
+		formatter.indent();
+
+		for (Measure<?> measure: orderedMeasures) {
+			MeasureKey key = measure.getKey();
+			formatter.write(quotate(key.getName()) + ": {");
+			formatter.indent();
+			formatter.write(quotate("name") + ": " + quotate(key.getName()) + ",");
+			formatter.write(quotate("value") + ": " + quotate(measure.getValue()) + ",");
+			for(String additionalKey: key.getAdditionalKeys()) {
+				formatter.write(quotate(additionalKey) + ": " + quotate(key.getAdditionalValue(additionalKey)) + ",");
+	
+			}
+			formatter.outdent().write("},");
+		}
+	}
+
+
 	private String quotate(Object s) {
 		if (s instanceof BigDecimal) {
 			BigDecimal bd = (BigDecimal)s;
@@ -82,4 +118,5 @@ public class JSONExporter extends Exporter {
 		}
 		return "\""+s+"\"";
 	}
+
 }
