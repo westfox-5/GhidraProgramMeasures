@@ -5,10 +5,10 @@ import java.math.RoundingMode;
 import java.util.Iterator;
 import java.util.List;
 
-import it.westfox5.ghidra.MeasuredProgram;
 import it.westfox5.ghidra.export.Exporter;
 import it.westfox5.ghidra.measure.Measure;
 import it.westfox5.ghidra.measure.MeasureKey;
+import it.westfox5.ghidra.measure.MeasuredProgram;
 import it.westfox5.ghidra.util.Formatter;
 import it.westfox5.ghidra.util.logger.Logger;
 
@@ -37,12 +37,12 @@ import it.westfox5.ghidra.util.logger.Logger;
  */
 public class JSONExporter extends Exporter {
 	
-	public JSONExporter(MeasuredProgram... programs) {
-		super(FileExtension.JSON, programs);
+	public JSONExporter() {
+		super(ExportType.JSON);
 	}
 
 	@Override
-	public String getFileContent() {		
+	public String getFileContent(List<MeasuredProgram> programs) {		
 		Formatter formatter = new Formatter();
 		
 		// --- START ----
@@ -51,20 +51,20 @@ public class JSONExporter extends Exporter {
 		// -- Start `programs` ----
 		formatter.indent().write(quotate("programs")+": [");
 
-		Iterator<MeasuredProgram> programsIter = super.programs.iterator();
+		Iterator<MeasuredProgram> programsIter = programs.iterator();
 		while(programsIter.hasNext()) {
-			MeasuredProgram program = programsIter.next();
+			MeasuredProgram measuredProgram = programsIter.next();
 			
 			// --- Start program ----
 			formatter.indent().write("{");
-			formatter.indent().write(quotate("name") + ": "+quotate(program.getProgram().getName())+",");
+			formatter.indent().write(quotate("name") + ": "+quotate(measuredProgram.getProgram().getName())+",");
 			
 			// --- Start `analysis` ----
 			formatter.write(quotate("analysis") + ": {");
 		
 			// --- Start measures ----
-			formatter.indent().write(quotate(program.getMeasureName()) + ": {");
-			dumpMeasures(program, formatter);
+			formatter.indent().write(quotate(measuredProgram.getAnalysisType().display()) + ": {");
+			dumpMeasures(measuredProgram, formatter);
 				
 			formatter.outdent().write("},");
 			// --- End measures ----

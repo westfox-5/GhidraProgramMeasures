@@ -1,4 +1,4 @@
-package it.westfox5.ghidra.halstead;
+package it.westfox5.ghidra.measure.impl.halstead;
 
 import it.westfox5.ghidra.measure.MeasureKey;
 

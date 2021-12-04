@@ -1,4 +1,4 @@
-package it.westfox5.ghidra.halstead;
+package it.westfox5.ghidra.measure.impl.halstead;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -9,10 +9,10 @@ import java.util.stream.Collectors;
 
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
-import it.westfox5.ghidra.MeasuredProgram;
-import it.westfox5.ghidra.halstead.Halstead.Entry.EntryType;
 import it.westfox5.ghidra.measure.Measure;
+import it.westfox5.ghidra.measure.MeasuredProgram;
 import it.westfox5.ghidra.measure.NumericMeasure;
+import it.westfox5.ghidra.measure.impl.halstead.Halstead.Entry.EntryType;
 import it.westfox5.ghidra.util.NumberUtils;
 
 /**		
@@ -36,7 +36,7 @@ public class Halstead extends MeasuredProgram {
 	}
 
 	private Halstead(Program program) {
-		super(program);
+		super(MeasuredProgram.HALSTEAD, program);
 	}
 	
 	private void load(Map<String, List<Entry>> opOccurrences, Map<String, List<Entry>> opndOccurrences) {
@@ -82,12 +82,7 @@ public class Halstead extends MeasuredProgram {
 		addMeasure(new NumericMeasure(HalsteadMeasure.CODING_TIME.key(), getCodingTime()));
 		addMeasure(new NumericMeasure(HalsteadMeasure.EST_ERRORS.key(), getEstimatedErrors()));
 	}
-	
-	@Override
-	public String getMeasureName() {
-		return "Halstead";
-	}
-	
+
 
 	@Override
 	public List<Measure<?>> getOrderedMeasures() {

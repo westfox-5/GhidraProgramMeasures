@@ -9,18 +9,17 @@ import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import it.westfox5.ghidra.analyzer.AnalysisException;
 import it.westfox5.ghidra.analyzer.Analyzer;
-import it.westfox5.ghidra.halstead.Halstead;
+import it.westfox5.ghidra.measure.impl.halstead.Halstead;
 import it.westfox5.ghidra.util.StringUtils;
 import it.westfox5.ghidra.util.logger.Logger;
 
-public class FunctionAnalyzer implements Analyzer {
+public class FunctionAnalyzer extends Analyzer {
 	private static final String RET_INSTR_MNEMONIC_STR = "RET";
 
 	private final String fnName;
-	private final Program program;
 	
 	public FunctionAnalyzer(Program program, String functionName) {
-		this.program = program;
+		super(program);
 		this.fnName = functionName;	
 	}
 	
@@ -46,6 +45,7 @@ public class FunctionAnalyzer implements Analyzer {
 	}
 	
 	
+	@Override
 	public Halstead getHalsteadMeasures() throws AnalysisException{
 		Halstead.Builder builder = Halstead.make(program);
 		
@@ -93,10 +93,16 @@ public class FunctionAnalyzer implements Analyzer {
 				}
 			}
 			
-			Logger.msgLogger.debug(this, instr);
+			//Logger.msgLogger.debug(this, instr);
 		}
 		
 		Logger.msgLogger.debug(this, "###################### END PARSING `"+fnName+"` [num_instructions:"+numInstructions+"] ######################");
+		
+		if (numInstructions == 0) {
+			Logger.msgLogger.info(this, "The parsing of `"+fnName+"` failed. Maybe the program is not analyzed yet.");
+
+			return null;
+		}
 		
 		return builder.build();
 	}

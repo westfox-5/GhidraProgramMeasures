@@ -1,6 +1,6 @@
 import ghidra.app.script.GhidraScript;
 
-public class HMPreScript extends GhidraScript {
+public class ProgramMeasuresPreScript extends GhidraScript {
 
 	@Override
 	protected void run() throws Exception {
