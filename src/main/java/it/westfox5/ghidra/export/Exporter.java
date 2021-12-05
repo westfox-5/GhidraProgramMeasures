@@ -127,6 +127,9 @@ public abstract class Exporter {
 		}
 		
 		Path destPath = EXPORT_LOCATION.resolve(getFilename());
+		if (Path.of(getFilename()).isAbsolute()) {
+			destPath = Path.of(getFilename());
+		}
 
 		try {
 		// default options are CREATE, TRUNCATE_EXISTING, and WRITE
@@ -135,7 +138,7 @@ public abstract class Exporter {
 		} catch(IOException e) {
 			throw new ExportException(e);
 		}
-		Logger.msgLogger.info(this, "Halstead's Measures file path: "+destPath.toAbsolutePath().toString());
+		Logger.msgLogger.info(this, "Export location: "+destPath.toAbsolutePath().toString());
 		return destPath.toFile();
 	}
 }

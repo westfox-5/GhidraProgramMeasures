@@ -40,6 +40,9 @@ import it.westfox5.ghidra.util.logger.Logger;
 //@formatter:on
 public final class ProgramMeasuresPlugin extends ProgramPlugin {
 
+	public static final boolean DEBUG = false;
+	
+	
 	static final String SHOW_PROVIDER_ACTION_NAME = "Display Measures";
 	
 	private ProgramMeasuresProvider provider;
