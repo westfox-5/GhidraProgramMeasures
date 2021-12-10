@@ -1,104 +1,100 @@
 package args;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import args.Argument.MultiArgument;
 import args.Argument.Operator;
 import it.westfox5.ghidra.export.Exporter.ExportType;
 import it.westfox5.ghidra.measure.AnalysisType;
 import it.westfox5.ghidra.measure.MeasuredProgram;
-import it.westfox5.ghidra.util.StringUtils;
 
 public class Parser {
-	private static final String ARG_SEPARATOR = "=";
-	private static final String SUBARG_MAIN_SEPARATOR = "::";
-	private static final String SUBARG_INNER_SEPARATOR = ";";
-
 	
 	public static Map<Operator<?>, Argument<?>> parseArgs(String... args) {
-		return List.of(args).stream()
-			.map(e -> parseArg(e))
+		if (!(args!=null && args.length > 0)) {
+			return new HashMap<>();
+		}
+		
+		
+		List<Argument<?>> arguments = new ArrayList<>();
+		
+		List<String> split = List.of(args);
+		Iterator<String> tokens = split.iterator();
+		while (tokens.hasNext()) {
+			String token = tokens.next();
+			Operator<?> op = Operator.byOpCode(token);
+			Argument<?> arg = createArgument(op, tokens);
+			
+			arguments.add(arg);
+		}
+			
+		return arguments.stream()
 			.filter(e -> e != null)
 			.collect(Collectors.toMap(e -> e.getOperation(), Function.identity()));
 	}
-	
-	private static Argument<?> parseArg(String arg) {
-		if (StringUtils.isEmpty(arg)) return null;
-				
-		String[] split = arg.split(ARG_SEPARATOR);
-		if (split.length > 1) {
-			Operator<?> op = Operator.byOpCode(split[0]);
-			String value = split[1];
-			
-			return createArgument(op, value);
-		}
-		
-		return null;
-	}
-	
-	private static Argument<?> createArgument(Operator<?> op, String value) {
-		if (Operator.ANALYSIS_MODE == op) {
-			List<String> analysisModeSubArgs = new ArrayList<>(List.of(value.split(SUBARG_MAIN_SEPARATOR)));
-			if (analysisModeSubArgs.size() < 2)
-				throw new RuntimeException("Expecting sub-arguments for argument `"+op+"` but found none.");
-			
-			// main_arg=main_arg_value::sub_arg1=sub_arg_value1;sub_arg2=sub_arg_value2...
-			
-			String analysisModeValue = analysisModeSubArgs.remove(0);
-			MultiArgument<String> analysisModeArg = new MultiArgument<>(Operator.ANALYSIS_MODE, analysisModeValue);
-			
-			analysisModeSubArgs.stream().map(s -> s.split(SUBARG_INNER_SEPARATOR)).collect(Collectors.toList());
-			parseSubArgs(analysisModeArg, analysisModeSubArgs);
-			
-			return analysisModeArg;
-			
-		} else if(Operator.ANALYSIS_TYPE == op) {
-			AnalysisType<?> analysisType = MeasuredProgram.getAnalysisTypeByName(value);
-			if (analysisType == null)
-				throw new RuntimeException("No analysis type found for name `"+value+"`.");
 
+	private static Argument<?> createArgument(Operator<?> op, Iterator<String> tokens) {
+		if (Operator.ANALYSIS_TYPE == op) {
+			if (op.getNumArgs() != 1) {
+				throw new IllegalArgumentException("Expecting only 1 value for the `analysis` argument.");
+			}
+			if (!tokens.hasNext()) {
+				throw new IllegalArgumentException("Expecting 1 value for the `analysis` argument but none was provided.");
+			}
+			
+			String analysisTypeName = tokens.next();
+			AnalysisType<?> analysisType = MeasuredProgram.getAnalysisTypeByName(analysisTypeName);
+			
 			return new Argument<AnalysisType<?>>(Operator.ANALYSIS_TYPE, analysisType);
+			
+		} else if(Operator.ANALYSIS_FUNCTION_NAME == op) {
+			if (op.getNumArgs() != 1) {
+				throw new IllegalArgumentException("Expecting only 1 value for the `analysis function name` argument.");
+			}
+			
+			if (!tokens.hasNext()) {
+				throw new IllegalArgumentException("Expecting 1 value for the `analysis function name` argument but none was provided.");
+			}
+			
+			String analysisFunctionName = tokens.next();
+			
+			return new Argument<String>(Operator.ANALYSIS_FUNCTION_NAME, analysisFunctionName);
 		
 		} else if(Operator.EXPORT_TYPE == op) {
-			ExportType exportType = ExportType.getExportTypeByName(value);
-			if (exportType == null)
-				throw new RuntimeException("No export type found for name `"+value+"` but found none.");
-
-			MultiArgument<ExportType> exportTypeArg = new MultiArgument<>(Operator.EXPORT_TYPE, exportType);
+			if (op.getNumArgs() != 1) {
+				throw new IllegalArgumentException("Expecting only 1 value for the `export` argument.");
+			}
 			
-			List<String> exportTypeSubArg = new ArrayList<>(List.of(value.split(SUBARG_MAIN_SEPARATOR)));
-			if (exportTypeSubArg.size() < 2)
-				return exportTypeArg;
-				//throw new RuntimeException("Expecting sub-arguments for argument `"+arg.name()+"` but found none.");
+			if (!tokens.hasNext()) {
+				throw new IllegalArgumentException("Expecting 1 value for the `export` argument but none was provided.");
+			}
 			
-			exportTypeSubArg = exportTypeSubArg.subList(1, exportTypeSubArg.size()); // remove main_arg
-			exportTypeSubArg.stream().map(s -> s.split(SUBARG_INNER_SEPARATOR)).collect(Collectors.toList());
-			parseSubArgs(exportTypeArg, exportTypeSubArg);
+			String exportTypeName = tokens.next();
+			ExportType exportType = ExportType.getExportTypeByName(exportTypeName);
 			
-			return exportTypeArg;
+			return new Argument<ExportType>(Operator.EXPORT_TYPE, exportType);
+		} else if (Operator.EXPORT_PATH == op) {
+			if (op.getNumArgs() != 1) {
+				throw new IllegalArgumentException("Expecting only 1 value for the `export path` argument.");
+			}
+			
+			if (!tokens.hasNext()) {
+				throw new IllegalArgumentException("Expecting 1 value for the `export path` argument but none was provided.");
+			}
+			
+			String exportPath = tokens.next();
+			
+			return new Argument<String>(Operator.EXPORT_PATH, exportPath);
+		
 
 		} else {
 			throw new RuntimeException("Argument `"+op+"` not implemented.");
 		}
 	}
 
-	private static void parseSubArgs(MultiArgument<?> mainArg, List<String> subArgs) {
-		for (String argStr: subArgs) {
-			if (StringUtils.isEmpty(argStr)) continue;
-						
-			String[] split = argStr.split(ARG_SEPARATOR);
-			if (split.length > 1) {
-				Operator<?> op = Operator.byOpCode(split[0]);
-				String string = split[1];
-				Argument<?> arg = createArgument(op, string);
-				
-				mainArg.getSubArgs().put(op, arg);
-			}
-			
-		}
-	}
 }

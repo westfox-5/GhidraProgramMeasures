@@ -114,7 +114,7 @@ public class JSONExporter extends Exporter {
 	private String quotate(Object s) {
 		if (s instanceof BigDecimal) {
 			BigDecimal bd = (BigDecimal)s;
-			return quotate(bd.setScale(3, RoundingMode.HALF_UP).toPlainString());
+			return bd.setScale(3, RoundingMode.HALF_UP).toPlainString();
 		}
 		return "\""+s+"\"";
 	}

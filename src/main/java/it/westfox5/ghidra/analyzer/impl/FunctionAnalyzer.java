@@ -1,7 +1,5 @@
 package it.westfox5.ghidra.analyzer.impl;
 
-import java.util.List;
-
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionIterator;
@@ -16,45 +14,22 @@ import it.westfox5.ghidra.util.logger.Logger;
 public class FunctionAnalyzer extends Analyzer {
 	private static final String RET_INSTR_MNEMONIC_STR = "RET";
 
-	private final String fnName;
+	private final Function function;
 	
-	public FunctionAnalyzer(Program program, String functionName) {
+	public FunctionAnalyzer(Program program, Function function) {
 		super(program);
-		this.fnName = functionName;	
+		this.function = function;	
 	}
-	
-	private Function findFunction() throws AnalysisException {
-		if (StringUtils.isEmpty(fnName)) {
-			throw new AnalysisException("No function name provided");
-		}
-		
-		if (program == null) {
-			throw new AnalysisException("No program provided");
-		}
-		
-		List<Function> fns = program.getListing().getGlobalFunctions(fnName);
-		if (!(fns != null && !fns.isEmpty())) {
-			throw new AnalysisException("No function found in current program with name `"+fnName+"`.");
-		}
-		if (fns.size() > 1) {
-			throw new AnalysisException("More than 1 function found in current program with name `"+fnName+"`.");
-		}
-		
-		// fns.size() == 1
-		return fns.iterator().next();
-	}
-	
 	
 	@Override
 	public Halstead getHalsteadMeasures() throws AnalysisException{
 		Halstead.Builder builder = Halstead.make(program);
 		
-		Function function = findFunction();
 		if (function == null) {
 			return builder.build();
 		}
 		
-		Logger.msgLogger.debug(this, "###################### START PARSING `"+fnName+"` [entry_point: `"+function.getEntryPoint()+"`] ######################");
+		Logger.msgLogger.debug(this, "###################### START PARSING `"+function.getName()+"` [entry_point: `"+function.getEntryPoint()+"`] ######################");
 
 		Listing listing = program.getListing();
 		
@@ -96,10 +71,10 @@ public class FunctionAnalyzer extends Analyzer {
 			//Logger.msgLogger.debug(this, instr);
 		}
 		
-		Logger.msgLogger.debug(this, "###################### END PARSING `"+fnName+"` [num_instructions:"+numInstructions+"] ######################");
+		Logger.msgLogger.debug(this, "###################### END PARSING `"+function.getName()+"` [num_instructions:"+numInstructions+"] ######################");
 		
 		if (numInstructions == 0) {
-			Logger.msgLogger.info(this, "The parsing of `"+fnName+"` failed. Maybe the program is not analyzed yet.");
+			Logger.msgLogger.info(this, "The parsing of `"+function.getName()+"` failed. Maybe the program is not analyzed yet.");
 
 			return null;
 		}

@@ -23,15 +23,14 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import it.westfox5.ghidra.analyzer.AnalysisException;
+import ghidra.program.util.ProgramLocation;
 import it.westfox5.ghidra.measure.MeasuredProgram;
 import it.westfox5.ghidra.measure.impl.halstead.Halstead;
-import it.westfox5.ghidra.util.logger.Logger;
 
 
 //@formatter:off
 @PluginInfo(
-	status = PluginStatus.STABLE ,
+	status = PluginStatus.STABLE,
 	packageName = "Program Measures Calculator",
 	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Calculate different measures over the program.",
@@ -42,14 +41,14 @@ public final class ProgramMeasuresPlugin extends ProgramPlugin {
 
 	public static final boolean DEBUG = false;
 	
-	
+	static final String NAME = "Program Measures Calculator";
 	static final String SHOW_PROVIDER_ACTION_NAME = "Display Measures";
 	
 	private ProgramMeasuresProvider provider;
 	private ProgramMeasureService<Halstead> service;
 
 	public ProgramMeasuresPlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool, true, false);
 	}
 	
 	@Override
@@ -71,23 +70,14 @@ public final class ProgramMeasuresPlugin extends ProgramPlugin {
 		tool.addAction(showProviderAction);
 	}
 
-	@Override
-	protected void dispose() {
-		provider.dispose();
+	public ProgramLocation getCurrentLocation() {
+		return currentLocation;
 	}
 
-	public Halstead get() {
-		try {
-			
-			return service.getOrCreate();
-			
-		} catch (AnalysisException ae) {
-			ae.printStackTrace();
-			Logger.msgLogger.err(this, ae.getMessage());
-		}
-		return null;
+	@Override
+	protected void locationChanged(ProgramLocation loc) {
+		provider.locationChanged(loc);
 	}
-	
 	
 	public ProgramMeasureService<Halstead> getService() {
 		return service;

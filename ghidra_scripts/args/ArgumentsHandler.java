@@ -1,5 +1,6 @@
 package args;
 
+import java.util.List;
 import java.util.Map;
 
 public class ArgumentsHandler {
@@ -21,13 +22,13 @@ public class ArgumentsHandler {
 	}
 	
 	public <T> T get(Argument.Operator<T> operator)  {
-		return has(operator) ? getArgument(operator).getValue() : null;
+		return has(operator) ? getArgument(operator).getSingleValue() : null;
 	}
 	
 	public <T> T getOrDefault(Argument.Operator<T> operator) {
 		if (has(operator)) {
 			Argument<T> argument = getArgument(operator);
-			T value = argument.getValue();
+			T value = argument.getSingleValue();
 			if (value != null) {
 				return value;
 			}
@@ -36,14 +37,20 @@ public class ArgumentsHandler {
 		return operator.getDefaultValue();
 	}
 	
+	public <T> List<T> getMultipleValues(Argument.Operator<T> operator) {
+		return has(operator) ? getArgument(operator).getValues() : null;
+
+	}
+	
+	@SuppressWarnings("unchecked")
 	public <T> boolean has(Argument.Operator<T> operator) {
-		@SuppressWarnings("unchecked")
 		Argument<T> argument = (Argument<T>)args.get(operator);
-		
 		if (argument == null) return false;
-		if (argument.getValue() == null) return false;
-		if (operator.getDefaultValue() == null) return false;
 		
-		return true;
+		if (argument.getValues() != null) return true;
+		
+		if (operator.getDefaultValue() != null) return true;
+		
+		return false;
 	}
 }

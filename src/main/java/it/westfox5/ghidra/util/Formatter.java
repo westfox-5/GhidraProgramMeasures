@@ -16,7 +16,7 @@ public class Formatter {
 
 	private StringBuilder sb;
 	private Integer indentationLevel;
-	private Symbol sym = Symbol.TAB;
+	private Symbol sym = Symbol.TWO_SPACES;
 	
 	public Formatter() {
 		this.indentationLevel = 0;
