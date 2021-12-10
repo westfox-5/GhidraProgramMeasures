@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -122,9 +123,13 @@ public abstract class Exporter {
 		}
 		
 		try {
-		// default options are CREATE, TRUNCATE_EXISTING, and WRITE
-		// @see https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Files.html#writeString(java.nio.file.Path,java.lang.CharSequence,java.nio.charset.Charset,java.nio.file.OpenOption...)
-		Files.writeString(destPath, sb, Charset.forName("UTF-8")); 
+			if (Files.notExists(destPath)) {
+				Files.createDirectories(destPath.getParent());
+				Files.createFile(destPath);
+			}
+			// default options are CREATE, TRUNCATE_EXISTING, and WRITE
+			// @see https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Files.html#writeString(java.nio.file.Path,java.lang.CharSequence,java.nio.charset.Charset,java.nio.file.OpenOption...)
+			Files.writeString(destPath, sb, Charset.forName("UTF-8")); 
 		} catch(IOException e) {
 			throw new ExportException(e);
 		}
