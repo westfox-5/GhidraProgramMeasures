@@ -1,4 +1,4 @@
-package args;
+package it.westfox5.ghidra.script.args;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,10 +14,10 @@ import it.westfox5.ghidra.measure.impl.halstead.Halstead;
 public class Argument<V> {
 	
 	/*
-	 	analysis halstead \
-	    analyze-function main \
-		export json \
-		export-path ~ 
+	 	analysis=halstead \
+	    analyze-function=main \
+		export=json \
+		export-path=<path>
 	*/
 	
 	public static abstract class Operator<T> {

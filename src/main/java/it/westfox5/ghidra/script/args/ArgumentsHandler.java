@@ -1,4 +1,4 @@
-package args;
+package it.westfox5.ghidra.script.args;
 
 import java.util.List;
 import java.util.Map;

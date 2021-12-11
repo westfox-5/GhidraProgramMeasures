@@ -1,8 +1,6 @@
-import args.Argument.Operator;
 
 import java.nio.file.Path;
 
-import args.ArgumentsHandler;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -12,8 +10,14 @@ import it.westfox5.ghidra.analyzer.AnalyzerFactory;
 import it.westfox5.ghidra.export.ExportException;
 import it.westfox5.ghidra.export.Exporter;
 import it.westfox5.ghidra.measure.MeasuredProgram;
+import it.westfox5.ghidra.script.args.ArgumentsHandler;
+import it.westfox5.ghidra.script.args.Argument.Operator;
 import it.westfox5.ghidra.util.ProgramHelper;
 
+/*
+	The ProgramMeasuresPlugin must be installed in Ghidra in order to use this script.
+	Please follow installation instructions in the README file.
+*/
 public class ProgramMeasuresScript extends GhidraScript {
 	
 	@Override

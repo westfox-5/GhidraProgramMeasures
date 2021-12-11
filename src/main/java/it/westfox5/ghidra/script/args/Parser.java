@@ -1,4 +1,4 @@
-package args;
+package it.westfox5.ghidra.script.args;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,18 +8,20 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import args.Argument.Operator;
 import it.westfox5.ghidra.export.Exporter.ExportType;
 import it.westfox5.ghidra.measure.AnalysisType;
 import it.westfox5.ghidra.measure.MeasuredProgram;
+import it.westfox5.ghidra.script.args.Argument.Operator;
+import it.westfox5.ghidra.util.StringUtils;
 
 public class Parser {
+	
+	private static final String ARG_VALUE_SEPARATOR = "=";
 	
 	public static Map<Operator<?>, Argument<?>> parseArgs(String... args) {
 		if (!(args!=null && args.length > 0)) {
 			return new HashMap<>();
 		}
-		
 		
 		List<Argument<?>> arguments = new ArrayList<>();
 		
@@ -27,8 +29,9 @@ public class Parser {
 		Iterator<String> tokens = split.iterator();
 		while (tokens.hasNext()) {
 			String token = tokens.next();
-			Operator<?> op = Operator.byOpCode(token);
-			Argument<?> arg = createArgument(op, tokens);
+			String[] argValue = token.split(ARG_VALUE_SEPARATOR);
+			Operator<?> op = Operator.byOpCode(argValue[0]);
+			Argument<?> arg = createArgument(op, argValue[1]);
 			
 			arguments.add(arg);
 		}
@@ -38,17 +41,16 @@ public class Parser {
 			.collect(Collectors.toMap(e -> e.getOperation(), Function.identity()));
 	}
 
-	private static Argument<?> createArgument(Operator<?> op, Iterator<String> tokens) {
+	private static Argument<?> createArgument(Operator<?> op, String value) {
 		if (Operator.ANALYSIS_TYPE == op) {
 			if (op.getNumArgs() != 1) {
 				throw new IllegalArgumentException("Expecting only 1 value for the `analysis` argument.");
 			}
-			if (!tokens.hasNext()) {
-				throw new IllegalArgumentException("Expecting 1 value for the `analysis` argument but none was provided.");
+			if (StringUtils.isEmpty(value)) {
+				throw new IllegalArgumentException("Expecting a value for the `analysis` argument but none was provided.");
 			}
 			
-			String analysisTypeName = tokens.next();
-			AnalysisType<?> analysisType = MeasuredProgram.getAnalysisTypeByName(analysisTypeName);
+			AnalysisType<?> analysisType = MeasuredProgram.getAnalysisTypeByName(value);
 			
 			return new Argument<AnalysisType<?>>(Operator.ANALYSIS_TYPE, analysisType);
 			
@@ -57,25 +59,22 @@ public class Parser {
 				throw new IllegalArgumentException("Expecting only 1 value for the `analysis function name` argument.");
 			}
 			
-			if (!tokens.hasNext()) {
-				throw new IllegalArgumentException("Expecting 1 value for the `analysis function name` argument but none was provided.");
+			if (StringUtils.isEmpty(value)) {
+				throw new IllegalArgumentException("Expecting a value for the `analysis function name` argument but none was provided.");
 			}
 			
-			String analysisFunctionName = tokens.next();
-			
-			return new Argument<String>(Operator.ANALYSIS_FUNCTION_NAME, analysisFunctionName);
+			return new Argument<String>(Operator.ANALYSIS_FUNCTION_NAME, value);
 		
 		} else if(Operator.EXPORT_TYPE == op) {
 			if (op.getNumArgs() != 1) {
 				throw new IllegalArgumentException("Expecting only 1 value for the `export` argument.");
 			}
 			
-			if (!tokens.hasNext()) {
-				throw new IllegalArgumentException("Expecting 1 value for the `export` argument but none was provided.");
+			if (StringUtils.isEmpty(value)) {
+				throw new IllegalArgumentException("Expecting a value for the `export` argument but none was provided.");
 			}
 			
-			String exportTypeName = tokens.next();
-			ExportType exportType = ExportType.getExportTypeByName(exportTypeName);
+			ExportType exportType = ExportType.getExportTypeByName(value);
 			
 			return new Argument<ExportType>(Operator.EXPORT_TYPE, exportType);
 		} else if (Operator.EXPORT_PATH == op) {
@@ -83,15 +82,11 @@ public class Parser {
 				throw new IllegalArgumentException("Expecting only 1 value for the `export path` argument.");
 			}
 			
-			if (!tokens.hasNext()) {
-				throw new IllegalArgumentException("Expecting 1 value for the `export path` argument but none was provided.");
+			if (StringUtils.isEmpty(value)) {
+				throw new IllegalArgumentException("Expecting a value for the `export path` argument but none was provided.");
 			}
 			
-			String exportPath = tokens.next();
-			
-			return new Argument<String>(Operator.EXPORT_PATH, exportPath);
-		
-
+			return new Argument<String>(Operator.EXPORT_PATH, value);
 		} else {
 			throw new RuntimeException("Argument `"+op+"` not implemented.");
 		}
