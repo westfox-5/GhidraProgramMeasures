@@ -33,11 +33,13 @@ The plugin will automatically detect the new location and calculate the start ad
 
 There is the possibility to export the analysis in the JSON format. 
 
+Other formats will be available when the need arises.
+
 ## Headless Usage
 
-Within the provider, a script has been implemented.
+Within the plugin, a Ghidra script has been implemented.
 
-The script is located in the `<project-root-dir>\ghidra_scripts` folder and can be called with the following command:
+The script is located in the `<project-root-dir>\ghidra_scripts` folder and can be run using the following command:
 
 ```
 <ghidra-root-dir>\support\analyzeHeadless \
@@ -64,9 +66,9 @@ Make sure that the GhidraDev extension for Eclipse is correctly installed.
 
 * Import the project: 
     * Click on `File` and `Open Project from File System`
-    * Select the root directory of the project and click `Finish`.
+    * Select the root directory of the project and click `Finish`
 
 * Configure Ghidra run: 
-    * Click on the `GhidraDev` tab and select `link Ghidra...` 
+    * Click on the `GhidraDev` tab and select `link Ghidra...`
     * Select the Ghidra installation root directory and then select the current java project. Don't mark python interpreter option.
-	* On the Run configuration, select `Run as` and then Ghidra (with GUI)
+	* On the Run configuration, select `Run as` and then Ghidra.
