@@ -22,6 +22,7 @@ import it.westfox5.ghidra.analyzer.AnalysisException;
 import it.westfox5.ghidra.export.Exporter.ExportType;
 import it.westfox5.ghidra.measure.impl.halstead.Halstead;
 import it.westfox5.ghidra.plugin.gui.ExportButton;
+import it.westfox5.ghidra.util.Formatter;
 import it.westfox5.ghidra.util.logger.Logger;
 import resources.Icons;
 
@@ -66,6 +67,7 @@ public class ProgramMeasuresProvider extends ComponentProvider {
 	@Override
 	public void closeComponent() {
 		dispose();
+		super.closeComponent();
 	}
 
 	// Customize GUI
@@ -106,16 +108,27 @@ public class ProgramMeasuresProvider extends ComponentProvider {
 			btnExportJSON.setEnabled(false);
 			return;
 		}
-
-		// submit
-	    textArea.setText(
-    		"--- Halstead's Measures -- SUMMARY ------------------"         + "\n" +
-    		" Unique operators (n1):\t"+ halstead.getNumDistinctOperators() + "\n" +
-    		" Unique operands  (n2):\t"+ halstead.getNumDistinctOperands()  + "\n" +
-    		" Total operators  (N1):\t"+ halstead.getNumOperators() + "\n" +
-    		" Total operands   (N2):\t"+ halstead.getNumOperands() + "\n" +
-    		"-----------------------------------------------------" + "\n");
-	    
+		
+		Formatter formatter = new Formatter();
+		formatter
+			.write("HALSTEAD'S MEASURES:")
+			.indent()
+				.write("Function: " + plugin.getService().getFunction().getName())
+			.outdent()
+			.write("-----------------------------------------------------")
+			.indent()
+				.write("Summary: ")
+				.indent()
+		    		.write("Unique operators (n1): "+ halstead.getNumDistinctOperators())
+		    		.write("Unique operands  (n2): "+ halstead.getNumDistinctOperands() )
+		    		.write("Total operators  (N1): "+ halstead.getNumOperators())
+		    		.write("Total operands   (N2): "+ halstead.getNumOperands())
+		    	.outdent()
+	    	.outdent()
+    		.write("-----------------------------------------------------");
+		
+    	// submit
+	    textArea.setText(formatter.get());
 	    textArea.setEnabled(true);
 		btnExportJSON.setEnabled(true);
 	}
