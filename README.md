@@ -46,12 +46,13 @@ The script is located in the `<project-root-dir>\ghidra_scripts` folder and can 
 	<path-to-ghidra-project> <ghidra-project-name> \
 	-import <path-to-binary-file> \
 	-postScript <project-root-dir>\ghidra_scripts\ProgramMeasuresScript.java \
-		analysis halstead analyze-function main  export json export-path <path-to-export-filename>
+		analysis=halstead analyze-function=main  export=json export-path=<path-to-export-filename>
 ```
 
 The script must be called as a `-postScript`, since it needs the program to be analyzed.
 
-The following table shows the supported parameters for the script:
+The operations of the script can be customized via command line arguments. Command line arguments must have the format `arg_name=arg_value`.
+The following table lists the currently supported arguments:
 
 |     Arg. Name    | Arg. Value Constraints |                        Description                        |                     Default Value                     |   |
 |:----------------:|:----------------------:|:---------------------------------------------------------:|:-----------------------------------------------------:|:-:|
