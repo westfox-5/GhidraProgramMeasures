@@ -62,5 +62,11 @@ public class Formatter {
 	public Integer getIndentationLevel() {
 		return indentationLevel;
 	}
+
+	@Override
+	public String toString() {
+		return get();
+	}
+	
 	
 }
