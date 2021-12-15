@@ -54,12 +54,12 @@ The script must be called as a `-postScript`, since it needs the program to be a
 The operations of the script can be customized via command line arguments. Command line arguments must have the format `arg_name=arg_value`.
 The following table lists the currently supported arguments:
 
-|     Arg. Name    | Arg. Value Constraints |                        Description                        |                     Default Value                     |   |
-|:----------------:|:----------------------:|:---------------------------------------------------------:|:-----------------------------------------------------:|:-:|
-|     analysis     |   [halstead, ]  | Type of analysis to be performed.                         |                        halstead                       |   |
-| analyze-function |                        | Name of the function to analyze.                          |                          main                         |   |
-|      export      |     [json, ]    | Type of export. If no present, no files will be generated |                          json                         |   |
-|    export-path   |                        | Path to the desired export location (filename included)   | the default export path is <project-root-dir>\exports	|   |
+|     Arg. Name    | Arg. Value Constraints |                        Description                        |                     Default Value                     |
+|:----------------:|:----------------------:|:---------------------------------------------------------:|:-----------------------------------------------------:|
+|     analysis     |   [halstead, ]  | Type of analysis to be performed.                         |                        halstead                       |
+| analyze-function |                        | Name of the function to analyze.                          |                          main                         |
+|      export      |     [json, ]    | Type of export. If no present, no files will be generated |                                                   | 
+|    export-path   |                        | Path to the desired export location (filename included)   | the default export path is \<project-root-dir\>\exports	|
 
 ## Eclipse integration for Development
 
