@@ -11,6 +11,8 @@ import it.westfox5.ghidra.measure.AnalysisType;
 import it.westfox5.ghidra.measure.MeasuredProgram;
 import it.westfox5.ghidra.measure.impl.halstead.Halstead;
 
+// TODO (#2) refactor of argument's structure
+// for example the only presence of an operator is sufficient to make arg_value=true (BooleanArgument)
 public class Argument<V> {
 	
 	/*
