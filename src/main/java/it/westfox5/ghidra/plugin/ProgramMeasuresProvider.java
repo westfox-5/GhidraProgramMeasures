@@ -61,7 +61,9 @@ public class ProgramMeasuresProvider extends ComponentProvider {
 
 	@Override
 	public void componentShown() {
-		installData();
+		if (plugin.getCurrentProgram() != null) {
+			installData();
+		}
 	}
 	
 	@Override
@@ -94,27 +96,30 @@ public class ProgramMeasuresProvider extends ComponentProvider {
 			halstead = plugin.getService().getOrCreate();
 
 		} catch (AnalysisException e) {
-			Logger.msgLogger.err(plugin, e.getMessage());
-		}
-		
-		// validate
-		if (halstead == null) {
-			Logger.msgLogger.err(plugin, "Program analysis failed");
+			Logger.msgLogger.err(plugin, "Program analysis failed:" + e.getMessage());
+
 			Function f = plugin.getService().getFunction();
 			textArea.setText("Unable to perform the analysis on the program" + (f != null ? " for function `"+f.getName()+"`" : "") +".\n"
-					+ "Please select another function in the program listing and click on the reload button.");
+						+ "Cause: " + e.getMessage() +".\n"
+					);
 			
 			textArea.setEnabled(false);
 			btnExportJSON.setEnabled(false);
 			return;
 		}
 		
+		
 		Formatter formatter = new Formatter();
 		formatter
-			.write("HALSTEAD'S MEASURES:")
-			.indent()
+			.write("HALSTEAD'S MEASURES:");
+		
+		if (plugin.getService().getFunction() != null) {
+			formatter.indent()
 				.write("Function: " + plugin.getService().getFunction().getName())
-			.outdent()
+			.outdent();
+		}
+		
+		formatter
 			.write("-----------------------------------------------------")
 			.indent()
 				.write("Summary: ")
@@ -144,6 +149,8 @@ public class ProgramMeasuresProvider extends ComponentProvider {
 		Function f = p.getFunctionManager().getFunctionContaining(loc.getAddress());
 		
 		plugin.getService().updateLoc(p, f);
+		
+		installData();
 	}
 
 	private void createActions() {
