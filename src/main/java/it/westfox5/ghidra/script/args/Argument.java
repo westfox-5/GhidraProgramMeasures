@@ -31,6 +31,13 @@ public class Argument<V> {
 			}
 		};
 		
+		public static final Operator<String> ANALYSIS_PROGRAM = new Operator<>(String.class, 0, "analyze-program"){
+			@Override
+			public String getDefaultValue() {
+				return null;
+			}
+		};
+		
 		public static final Operator<String> ANALYSIS_FUNCTION_NAME = new Operator<>(String.class, 1, "analyze-function"){
 			@Override
 			public String getDefaultValue() {
@@ -80,7 +87,7 @@ public class Argument<V> {
 		private static final Map<String, Operator<?>> byOpCode;
 		static {
 			
-			byOpCode = List.of(ANALYSIS_TYPE, ANALYSIS_FUNCTION_NAME, EXPORT_TYPE, EXPORT_PATH).stream()
+			byOpCode = List.of(ANALYSIS_TYPE, ANALYSIS_FUNCTION_NAME, ANALYSIS_PROGRAM, EXPORT_TYPE, EXPORT_PATH).stream()
 					.collect(Collectors.toMap(Operator::getOpCode, Function.identity()));
 			
 			/*

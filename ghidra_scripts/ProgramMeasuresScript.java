@@ -33,9 +33,17 @@ public class ProgramMeasuresScript extends GhidraScript {
 		Program program = getCurrentProgram();
 
 		/*-----------------  ANALYSIS -----------------*/
-
-		Function function = ProgramHelper.findFunctionByName(program, args.getOrDefault(Operator.ANALYSIS_FUNCTION_NAME));
-		Analyzer analyzer = AnalyzerFactory.functionAnalyzer(program, function);		
+		Analyzer analyzer;
+		if (args.has(Operator.ANALYSIS_PROGRAM)) {
+			analyzer = AnalyzerFactory.programAnalyzer(program);
+		
+		} else if (args.has(Operator.ANALYSIS_FUNCTION_NAME)) {
+			Function function = ProgramHelper.findFunctionByName(program, args.getOrDefault(Operator.ANALYSIS_FUNCTION_NAME));
+			analyzer = AnalyzerFactory.functionAnalyzer(program, function);		
+			
+		} else {
+			throw new IllegalArgumentException("Please provide the type of analysis to perform.");
+		}
 		
 		measuredProgram = analyzer.getMeasure(args.getOrDefault(Operator.ANALYSIS_TYPE));
 		if (measuredProgram == null) {

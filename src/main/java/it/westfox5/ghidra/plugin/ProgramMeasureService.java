@@ -54,15 +54,17 @@ public class ProgramMeasureService<P extends MeasuredProgram> {
 
 		if (program == null)
 			program = plugin.getCurrentProgram();
-		
+		/*
 		if (function == null) {
 			function = ProgramHelper.findFunctionByName(program, "main");
 			if (function == null) {
 				throw new AnalysisException("Default function `main` not found in the program!");
 			}
 		}
+		*/
 		
-		Analyzer calculator = AnalyzerFactory.functionAnalyzer(program, function);
+		
+		Analyzer calculator = AnalyzerFactory.programAnalyzer(program);
 		
 		cached = calculator.getMeasure(this.analysisType);
 	}	
